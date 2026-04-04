@@ -86,6 +86,89 @@ def ndcg_at_k(
     return dcg / idcg
 
 
+def map_at_k(
+    results: list[RetrievalResult],
+    relevant_doc_ids: set[str],
+    k: int = 5,
+) -> float:
+    """Mean Average Precision at K.
+
+    Computes the average of precision values at each relevant position
+    in the top-k results. Rewards systems that rank relevant docs earlier.
+    """
+    top_k = results[:k]
+    if not top_k or not relevant_doc_ids:
+        return 0.0
+
+    score = 0.0
+    hits = 0
+    for i, r in enumerate(top_k):
+        if r.chunk.doc_id in relevant_doc_ids:
+            hits += 1
+            score += hits / (i + 1)
+
+    return score / min(len(relevant_doc_ids), k) if relevant_doc_ids else 0.0
+
+
+def rouge_l(answer: str, reference: str) -> dict[str, float]:
+    """ROUGE-L score based on Longest Common Subsequence.
+
+    Measures overlap between generated answer and reference answer.
+    Returns precision, recall, and F1 scores.
+    """
+    answer_tokens = answer.lower().split()
+    reference_tokens = reference.lower().split()
+
+    if not answer_tokens or not reference_tokens:
+        return {"precision": 0.0, "recall": 0.0, "f1": 0.0}
+
+    m = len(answer_tokens)
+    n = len(reference_tokens)
+
+    # LCS using dynamic programming
+    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    for i in range(1, m + 1):
+        for j in range(1, n + 1):
+            if answer_tokens[i - 1] == reference_tokens[j - 1]:
+                dp[i][j] = dp[i - 1][j - 1] + 1
+            else:
+                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+
+    lcs_len = dp[m][n]
+    precision = lcs_len / m if m > 0 else 0.0
+    recall = lcs_len / n if n > 0 else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+
+    return {
+        "precision": round(precision, 4),
+        "recall": round(recall, 4),
+        "f1": round(f1, 4),
+    }
+
+
+def context_precision(
+    results: list[RetrievalResult],
+    relevant_doc_ids: set[str],
+) -> float:
+    """Context Precision — weighted precision that penalizes irrelevant chunks
+    appearing before relevant ones.
+
+    Used in RAGAS-style evaluation. Higher score means relevant chunks
+    are ranked earlier in the retrieved results.
+    """
+    if not results or not relevant_doc_ids:
+        return 0.0
+
+    score = 0.0
+    hits = 0
+    for i, r in enumerate(results):
+        if r.chunk.doc_id in relevant_doc_ids:
+            hits += 1
+            score += hits / (i + 1)
+
+    return score / len(relevant_doc_ids) if relevant_doc_ids else 0.0
+
+
 def faithfulness_score(answer: str, source_texts: list[str]) -> dict[str, float]:
     """Simple faithfulness estimation based on n-gram overlap.
 

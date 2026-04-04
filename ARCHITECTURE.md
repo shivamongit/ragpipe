@@ -1,0 +1,299 @@
+# ragpipe Architecture — How It Works
+
+This document explains ragpipe's internals: what each module does, how they connect, and why the design choices were made.
+
+---
+
+## What Is ragpipe?
+
+ragpipe is a modular RAG (Retrieval-Augmented Generation) framework. It takes your documents, splits them into searchable chunks, indexes them for retrieval, and then uses an LLM to answer questions grounded in your actual data.
+
+The key difference from basic RAG tutorials: ragpipe implements the **advanced patterns** that production systems use in 2026 — hybrid search, contextual chunking, query expansion, and proper evaluation.
+
+---
+
+## The Pipeline
+
+Every ragpipe workflow follows this flow:
+
+```
+Documents → Chunker → Embedder → Retriever → Reranker → Generator → Answer
+```
+
+Each step is a pluggable component. You can swap any piece without touching the rest.
+
+### Step 1: Document Loading
+
+**What it does:** Reads files (PDF, DOCX, TXT, Markdown) and converts them into `Document` objects with content and metadata.
+
+```python
+# ragpipe/loaders/
+TextLoader    → .txt, .md files
+PDFLoader     → .pdf files (via PyPDF2)
+DocxLoader    → .docx files (via python-docx)
+DirectoryLoader → recursively loads all supported files from a folder
+```
+
+**Why separate loaders?** Different file formats need different parsers. The loader abstracts this away — downstream components only see `Document(content=str, metadata=dict)`.
+
+### Step 2: Chunking
+
+**What it does:** Splits large documents into smaller pieces that fit within embedding model context windows and are semantically coherent.
+
+```python
+# ragpipe/chunkers/
+TokenChunker      → fixed-size windows by token count (512 tokens, 64 overlap)
+RecursiveChunker  → tries paragraph → sentence → word boundaries before falling back
+SemanticChunker   → embeds each sentence, splits where similarity drops below threshold
+ContextualChunker → wraps any chunker + adds LLM-generated document context to each chunk
+```
+
+**Why multiple strategies?**
+
+- **TokenChunker** is predictable and fast. Use when chunk size consistency matters (e.g., cost estimation).
+- **RecursiveChunker** preserves document structure. Paragraphs stay together. A sentence about "the above table" stays near the table.
+- **SemanticChunker** groups related sentences even across paragraph boundaries. Best coherence, but requires an embedder at chunking time.
+- **ContextualChunker** is the biggest retrieval improvement. It calls an LLM to generate a 2-3 sentence context prefix for each chunk explaining where it fits in the document. Anthropic reported **49% fewer retrieval failures** with this approach. The chunk "Revenue was $4.2B" becomes "This section discusses Q3 2025 financial results from the annual report. Revenue was $4.2B" — dramatically easier to match.
+
+### Step 3: Embedding
+
+**What it does:** Converts text chunks into dense vector representations (arrays of floats). Similar texts have similar vectors.
+
+```python
+# ragpipe/embedders/
+OllamaEmbedder              → local, free (nomic-embed-text, mxbai-embed-large, bge-m3)
+SentenceTransformerEmbedder → local, free (all-MiniLM-L6-v2, BAAI/bge-large-en-v1.5)
+OpenAIEmbedder              → cloud API (text-embedding-3-small, text-embedding-3-large)
+```
+
+**Why Ollama-first?** Because it's free, private, and fast enough for most use cases. `nomic-embed-text` (768 dimensions) produces embeddings competitive with OpenAI's `text-embedding-3-small` at zero cost.
+
+### Step 4: Retrieval
+
+**What it does:** Given a query, finds the most relevant chunks from the index.
+
+```python
+# ragpipe/retrievers/
+FaissRetriever   → FAISS IndexFlatIP with L2-normalized cosine similarity + disk persistence
+NumpyRetriever   → pure NumPy dot-product search, zero dependencies
+BM25Retriever    → Okapi BM25 keyword-based ranking (sparse retrieval)
+HybridRetriever  → fuses dense + sparse results with Reciprocal Rank Fusion (RRF)
+```
+
+**Why hybrid search matters:**
+
+Dense (vector) search understands meaning: "automobile" matches "car". But it misses exact keywords: searching for "error code E4021" won't match if the embedding doesn't capture that specific token.
+
+Sparse (BM25) search captures exact keywords perfectly. "E4021" matches "E4021". But it misses synonyms: "automobile" won't match "car".
+
+**HybridRetriever combines both** using Reciprocal Rank Fusion:
+
+```
+RRF_score(doc) = Σ weight / (k + rank)
+```
+
+A document ranked #1 in dense and #3 in BM25 scores higher than one ranked #2 in both. No score normalization needed — RRF works on ranks, not raw scores.
+
+### Step 5: Query Expansion
+
+**What it does:** Transforms the raw user query into better search queries before retrieval.
+
+```python
+# ragpipe/query/
+HyDEExpander       → generates a hypothetical answer, searches for docs similar to that answer
+MultiQueryExpander → generates N diverse reformulations of the question
+StepBackExpander   → generates a broader question for background context
+```
+
+**Why this matters:**
+
+User queries are often poor search queries. "Why is our API slow?" doesn't match well against documentation about "connection pool exhaustion" or "N+1 query patterns." Query expansion bridges this gap:
+
+- **HyDE** generates "API slowness is typically caused by connection pool exhaustion, N+1 queries, or missing indexes..." — this hypothetical answer matches document language much better than the question.
+- **Multi-Query** generates "API performance debugging", "slow response time causes", "backend latency troubleshooting" — covering terminology the user didn't think of.
+- **Step-Back** generates "What are common causes of web application performance issues?" — retrieving background context that helps answer the specific question.
+
+### Step 6: Reranking
+
+**What it does:** Takes the top-K retrieved chunks and re-scores them with a more powerful (but slower) model.
+
+```python
+# ragpipe/rerankers/
+CrossEncoderReranker → processes (query, chunk) pairs jointly for precise relevance scores
+```
+
+**Why rerank?** Bi-encoder retrieval (embedding similarity) is fast but approximate. A cross-encoder processes the query and passage together in a single forward pass, capturing token-level interactions. It's too slow to run on all chunks, but perfect for re-scoring the top 10-20 candidates down to the top 3-5.
+
+### Step 7: Generation
+
+**What it does:** Sends the query + retrieved context to an LLM to generate a cited answer.
+
+```python
+# ragpipe/generators/
+OllamaGenerator → local generation via Ollama (gemma4, qwen3.5, llama3.3, phi-4)
+OpenAIGenerator → cloud generation via OpenAI API (gpt-4o-mini, gpt-4o)
+```
+
+Both generators use a structured system prompt that instructs the LLM to:
+1. Answer only from the provided context
+2. Cite sources using [Source N] notation
+3. Admit when context is insufficient
+4. Preserve technical terminology
+
+### Step 8: Evaluation
+
+**What it does:** Measures how good your retrieval and generation are.
+
+```python
+# ragpipe/evaluation/
+# Retrieval metrics (do the right chunks come back?)
+hit_rate()          → did we find at least one relevant chunk?
+mrr()               → how early is the first relevant chunk?
+precision_at_k()    → what fraction of top-K are relevant?
+recall_at_k()       → what fraction of relevant docs are in top-K?
+ndcg_at_k()         → rank-weighted quality score
+map_at_k()          → average precision across all relevant positions
+context_precision() → RAGAS-style weighted precision
+
+# Generation metrics (is the answer good?)
+rouge_l()           → longest common subsequence overlap with reference answer
+faithfulness_score()→ n-gram overlap between answer and source chunks (grounding check)
+```
+
+---
+
+## Data Flow Example
+
+Here's what happens when you call `pipe.query("What is FAISS?")`:
+
+```
+1. embedder.embed(["What is FAISS?"])
+   → [0.12, -0.34, 0.56, ...]  (768-dim vector)
+
+2. dense_retriever.search(vector, top_k=15)
+   → 15 chunks ranked by cosine similarity
+
+3. bm25_retriever.search_text("What is FAISS?", top_k=15)
+   → 15 chunks ranked by BM25 keyword score
+
+4. hybrid_retriever.rrf_fuse(dense_results, sparse_results)
+   → 5 chunks with combined RRF scores
+
+5. reranker.rerank("What is FAISS?", 5_chunks, top_k=3)
+   → 3 chunks re-scored by cross-encoder
+
+6. generator.generate("What is FAISS?", 3_chunks)
+   → "FAISS is a library developed by Meta for efficient similarity search
+      of dense vectors [Source 1]. It supports both exact and approximate
+      nearest neighbor search [Source 2]..."
+
+7. Return GenerationResult(answer=..., sources=..., latency_ms=..., tokens_used=...)
+```
+
+---
+
+## Project Structure
+
+```
+ragpipe/
+├── ragpipe/
+│   ├── __init__.py           # Package root, version, public API
+│   ├── core.py               # Document, Chunk, RetrievalResult, GenerationResult, Pipeline
+│   ├── chunkers/
+│   │   ├── base.py           # Abstract BaseChunker
+│   │   ├── token.py          # TokenChunker (tiktoken)
+│   │   ├── recursive.py      # RecursiveChunker (hierarchical separators)
+│   │   ├── semantic.py       # SemanticChunker (embedding breakpoints)
+│   │   └── contextual.py     # ContextualChunker (LLM context prefix)
+│   ├── embedders/
+│   │   ├── base.py           # Abstract BaseEmbedder
+│   │   ├── ollama.py         # OllamaEmbedder (local, free)
+│   │   ├── sentence_transformer.py  # SentenceTransformerEmbedder (local)
+│   │   └── openai.py         # OpenAIEmbedder (cloud API)
+│   ├── retrievers/
+│   │   ├── base.py           # Abstract BaseRetriever
+│   │   ├── faiss_retriever.py    # FaissRetriever (IndexFlatIP + persistence)
+│   │   ├── numpy_retriever.py    # NumpyRetriever (zero-dep)
+│   │   ├── bm25_retriever.py     # BM25Retriever (sparse keyword search)
+│   │   └── hybrid_retriever.py   # HybridRetriever (RRF fusion)
+│   ├── rerankers/
+│   │   ├── base.py           # Abstract BaseReranker
+│   │   └── cross_encoder.py  # CrossEncoderReranker
+│   ├── generators/
+│   │   ├── base.py           # Abstract BaseGenerator
+│   │   ├── ollama_gen.py     # OllamaGenerator (local, free)
+│   │   └── openai_gen.py     # OpenAIGenerator (cloud API)
+│   ├── query/
+│   │   ├── __init__.py
+│   │   └── expansion.py      # HyDEExpander, MultiQueryExpander, StepBackExpander
+│   ├── evaluation/
+│   │   ├── __init__.py
+│   │   └── metrics.py        # 9 evaluation metrics
+│   └── loaders/
+│       ├── text.py           # TextLoader (.txt, .md)
+│       ├── pdf.py            # PDFLoader (.pdf)
+│       ├── docx.py           # DocxLoader (.docx)
+│       └── directory.py      # DirectoryLoader (recursive)
+├── tests/                    # 54 tests covering all components
+├── examples/                 # Quickstart and OpenAI pipeline examples
+├── pyproject.toml            # Package config, dependencies, extras
+└── README.md                 # Documentation
+```
+
+---
+
+## Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **Hybrid search by default** | Dense misses exact keywords, BM25 misses semantics. Combining both with RRF gives 10-30% better recall in benchmarks. |
+| **Contextual chunking** | Anthropic's research shows 49% fewer retrieval failures. The upfront LLM cost pays for itself in accuracy. |
+| **Ollama-first providers** | Local inference is free, private, and increasingly competitive with cloud APIs. |
+| **FAISS IndexFlatIP** | Exact cosine similarity. No approximate index tuning needed under 100K vectors. |
+| **tiktoken cl100k_base** | Same tokenizer as GPT-4 and text-embedding-3. Token counts match what APIs process. |
+| **Sync-first API** | Simplicity. Wrap with asyncio if needed. Most RAG use cases are batch or request-response. |
+| **Optional dependencies** | Core needs only numpy + tiktoken (~5 MB). FAISS, OpenAI, sentence-transformers are opt-in. |
+| **Abstract base classes** | Every component is a base class. Extend `BaseEmbedder` to add Cohere, Voyage AI, or any provider. |
+| **Separate retrieve() and query()** | `retrieve()` returns chunks without generation — essential for evaluation, debugging, and hybrid workflows. |
+
+---
+
+## How to Extend
+
+### Custom Embedder
+
+```python
+from ragpipe.embedders.base import BaseEmbedder
+
+class MyEmbedder(BaseEmbedder):
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        # Your embedding logic
+        return [[0.1, 0.2, ...] for _ in texts]
+
+    @property
+    def dim(self) -> int:
+        return 768
+```
+
+### Custom Retriever
+
+```python
+from ragpipe.retrievers.base import BaseRetriever
+
+class PineconeRetriever(BaseRetriever):
+    def add(self, chunks, embeddings): ...
+    def search(self, query_embedding, top_k=5): ...
+    @property
+    def count(self) -> int: ...
+```
+
+### Custom Generator
+
+```python
+from ragpipe.generators.base import BaseGenerator, GenerationOutput
+
+class AnthropicGenerator(BaseGenerator):
+    def generate(self, question, context) -> GenerationOutput: ...
+```
+
+Every custom component plugs directly into `Pipeline` without any other changes.

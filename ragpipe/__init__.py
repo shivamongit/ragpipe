@@ -1,8 +1,8 @@
-"""ragpipe — Production-grade modular RAG framework."""
+"""ragpipe — Production-grade modular RAG framework with hybrid search, contextual chunking, and query expansion."""
 
-__version__ = "0.4.0"
+__version__ = "1.0.0"
 
-from ragpipe.core import Document, Chunk, RetrievalResult, Pipeline
+from ragpipe.core import Document, Chunk, RetrievalResult, GenerationResult, Pipeline
 from ragpipe.chunkers.base import BaseChunker
 from ragpipe.embedders.base import BaseEmbedder
 from ragpipe.retrievers.base import BaseRetriever
@@ -13,6 +13,7 @@ __all__ = [
     "Document",
     "Chunk",
     "RetrievalResult",
+    "GenerationResult",
     "Pipeline",
     "BaseChunker",
     "BaseEmbedder",
