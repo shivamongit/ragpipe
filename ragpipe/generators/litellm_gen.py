@@ -20,21 +20,39 @@ SYSTEM_PROMPT = """You are a precise document analysis assistant. Answer questio
 class LiteLLMGenerator(BaseGenerator):
     """Universal generator wrapping 100+ LLM providers via litellm.
 
-    Supports OpenAI, Anthropic, Google Gemini, Mistral, Together AI,
+    Supports OpenAI, Anthropic, Google Gemini, Mistral, DeepSeek,
     Groq, Azure OpenAI, AWS Bedrock, Ollama, and more — all via
     the same interface.
 
-    Usage:
-        generator = LiteLLMGenerator(model="gpt-4o-mini")
-        generator = LiteLLMGenerator(model="claude-sonnet-4-20250514")
-        generator = LiteLLMGenerator(model="gemini/gemini-2.0-flash")
-        generator = LiteLLMGenerator(model="groq/llama-3.3-70b")
+    Popular models (April 2026):
+        # OpenAI
+        generator = LiteLLMGenerator(model="gpt-5.4")
+        generator = LiteLLMGenerator(model="gpt-5.4-pro")
+        generator = LiteLLMGenerator(model="gpt-5.3-codex")
+        generator = LiteLLMGenerator(model="gpt-5-mini")
+        generator = LiteLLMGenerator(model="gpt-5-nano")
+        # Anthropic
+        generator = LiteLLMGenerator(model="claude-opus-4-6")
+        generator = LiteLLMGenerator(model="claude-sonnet-4-6")
+        generator = LiteLLMGenerator(model="claude-haiku-4-5")
+        # Google Gemini
+        generator = LiteLLMGenerator(model="gemini/gemini-3.1-pro")
+        generator = LiteLLMGenerator(model="gemini/gemini-3-flash")
+        # Mistral
+        generator = LiteLLMGenerator(model="mistral/mistral-large-3")
+        generator = LiteLLMGenerator(model="mistral/magistral-medium-1.2")
+        # DeepSeek
+        generator = LiteLLMGenerator(model="deepseek/deepseek-chat")  # V3.2
+        generator = LiteLLMGenerator(model="deepseek/deepseek-reasoner")  # R1
+        # Local via Ollama
         generator = LiteLLMGenerator(model="ollama/gemma4")
+        generator = LiteLLMGenerator(model="ollama/qwen3.5")
+        generator = LiteLLMGenerator(model="ollama/llama4")
     """
 
     def __init__(
         self,
-        model: str = "gpt-4o-mini",
+        model: str = "gpt-5.4",
         temperature: float = 0.1,
         max_tokens: int = 1024,
         system_prompt: str | None = None,

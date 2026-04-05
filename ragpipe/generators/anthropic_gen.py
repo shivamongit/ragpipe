@@ -20,15 +20,20 @@ SYSTEM_PROMPT = """You are a precise document analysis assistant. Answer questio
 class AnthropicGenerator(BaseGenerator):
     """Generate cited answers using Anthropic Claude models.
 
-    Supports Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus, etc.
+    Supported models (April 2026):
+    - claude-opus-4-6        — flagship, $5/$25 per M tokens, 200K ctx (1M beta)
+    - claude-sonnet-4-6      — best value, $3/$15 per M tokens, 200K ctx (1M beta)
+    - claude-haiku-4-5       — fast & cheap, $1/$5 per M tokens, 200K ctx
+    - claude-sonnet-4-20250514  — previous generation
 
     Usage:
-        generator = AnthropicGenerator(model="claude-sonnet-4-20250514")
+        generator = AnthropicGenerator(model="claude-sonnet-4-6")
+        generator = AnthropicGenerator(model="claude-opus-4-6")
     """
 
     def __init__(
         self,
-        model: str = "claude-sonnet-4-20250514",
+        model: str = "claude-sonnet-4-6",
         api_key: str | None = None,
         temperature: float = 0.1,
         max_tokens: int = 1024,

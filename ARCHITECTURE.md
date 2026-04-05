@@ -64,7 +64,11 @@ ContextualChunker → wraps any chunker + adds LLM-generated document context to
 OllamaEmbedder              → local, free (nomic-embed-text, mxbai-embed-large, bge-m3)
 SentenceTransformerEmbedder → local, free (all-MiniLM-L6-v2, BAAI/bge-large-en-v1.5)
 OpenAIEmbedder              → cloud API (text-embedding-3-small, text-embedding-3-large)
+VoyageEmbedder              → cloud API (voyage-3, voyage-code-3, voyage-3-lite)
+JinaEmbedder                → cloud API (jina-embeddings-v3 — 8192 token context)
 ```
+
+All embedders support both `embed()` (sync) and `aembed()` (native async via httpx/AsyncOpenAI).
 
 **Why Ollama-first?** Because it's free, private, and fast enough for most use cases. `nomic-embed-text` (768 dimensions) produces embeddings competitive with OpenAI's `text-embedding-3-small` at zero cost.
 
@@ -74,8 +78,10 @@ OpenAIEmbedder              → cloud API (text-embedding-3-small, text-embeddin
 
 ```python
 # ragpipe/retrievers/
-FaissRetriever   → FAISS IndexFlatIP with L2-normalized cosine similarity + disk persistence
 NumpyRetriever   → pure NumPy dot-product search, zero dependencies
+FaissRetriever   → FAISS IndexFlatIP with L2-normalized cosine similarity + disk persistence
+ChromaRetriever  → ChromaDB: persistent local store, metadata filtering, zero-config
+QdrantRetriever  → Qdrant: self-hosted or cloud, metadata filtering, scalable
 BM25Retriever    → Okapi BM25 keyword-based ranking (sparse retrieval)
 HybridRetriever  → fuses dense + sparse results with Reciprocal Rank Fusion (RRF)
 ```
@@ -130,11 +136,15 @@ CrossEncoderReranker → processes (query, chunk) pairs jointly for precise rele
 
 ```python
 # ragpipe/generators/
-OllamaGenerator → local generation via Ollama (gemma4, qwen3.5, llama3.3, phi-4)
-OpenAIGenerator → cloud generation via OpenAI API (gpt-4o-mini, gpt-4o)
+OllamaGenerator    → local, free (gemma4, qwen3.5, llama4:scout, deepseek-v3.2, nemotron3)
+OpenAIGenerator    → OpenAI (gpt-5.4, gpt-5.4-pro, gpt-5.3-codex, gpt-5-mini, gpt-5-nano)
+AnthropicGenerator → Anthropic (claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5)
+LiteLLMGenerator   → 100+ models (Gemini 3.1 Pro, Gemini 3 Flash, Mistral Large 3, DeepSeek V3.2, ...)
 ```
 
-Both generators use a structured system prompt that instructs the LLM to:
+All generators support `generate()` / `agenerate()` (sync/async) and `stream()` / `astream()` (token-by-token streaming).
+
+All generators use a structured system prompt that instructs the LLM to:
 1. Answer only from the provided context
 2. Cite sources using [Source N] notation
 3. Admit when context is insufficient
@@ -198,7 +208,13 @@ Here's what happens when you call `pipe.query("What is FAISS?")`:
 ragpipe/
 ├── ragpipe/
 │   ├── __init__.py           # Package root, version, public API
+│   ├── __main__.py           # CLI entry point (python -m ragpipe serve)
 │   ├── core.py               # Document, Chunk, RetrievalResult, GenerationResult, Pipeline
+│   │                           # (sync + async: ingest/aingest, query/aquery, stream_query)
+│   ├── config.py             # YAML/dict pipeline configuration (PipelineConfig)
+│   ├── server/
+│   │   ├── __init__.py
+│   │   └── app.py            # FastAPI REST API + WebSocket streaming
 │   ├── chunkers/
 │   │   ├── base.py           # Abstract BaseChunker
 │   │   ├── token.py          # TokenChunker (tiktoken)
@@ -206,23 +222,29 @@ ragpipe/
 │   │   ├── semantic.py       # SemanticChunker (embedding breakpoints)
 │   │   └── contextual.py     # ContextualChunker (LLM context prefix)
 │   ├── embedders/
-│   │   ├── base.py           # Abstract BaseEmbedder
+│   │   ├── base.py           # Abstract BaseEmbedder (embed + aembed)
 │   │   ├── ollama.py         # OllamaEmbedder (local, free)
 │   │   ├── sentence_transformer.py  # SentenceTransformerEmbedder (local)
-│   │   └── openai.py         # OpenAIEmbedder (cloud API)
+│   │   ├── openai.py         # OpenAIEmbedder (cloud API)
+│   │   ├── voyage.py         # VoyageEmbedder (Voyage AI)
+│   │   └── jina.py           # JinaEmbedder (Jina AI, 8192 ctx)
 │   ├── retrievers/
 │   │   ├── base.py           # Abstract BaseRetriever
-│   │   ├── faiss_retriever.py    # FaissRetriever (IndexFlatIP + persistence)
 │   │   ├── numpy_retriever.py    # NumpyRetriever (zero-dep)
+│   │   ├── faiss_retriever.py    # FaissRetriever (IndexFlatIP + persistence)
+│   │   ├── chroma_retriever.py   # ChromaRetriever (persistent local)
+│   │   ├── qdrant_retriever.py   # QdrantRetriever (scalable cloud/self-hosted)
 │   │   ├── bm25_retriever.py     # BM25Retriever (sparse keyword search)
 │   │   └── hybrid_retriever.py   # HybridRetriever (RRF fusion)
 │   ├── rerankers/
-│   │   ├── base.py           # Abstract BaseReranker
+│   │   ├── base.py           # Abstract BaseReranker (rerank + arerank)
 │   │   └── cross_encoder.py  # CrossEncoderReranker
 │   ├── generators/
-│   │   ├── base.py           # Abstract BaseGenerator
+│   │   ├── base.py           # Abstract BaseGenerator (generate/agenerate/stream/astream)
 │   │   ├── ollama_gen.py     # OllamaGenerator (local, free)
-│   │   └── openai_gen.py     # OpenAIGenerator (cloud API)
+│   │   ├── openai_gen.py     # OpenAIGenerator (GPT-5.4, 5.3-Codex, etc.)
+│   │   ├── anthropic_gen.py  # AnthropicGenerator (Claude Opus/Sonnet 4.6, Haiku 4.5)
+│   │   └── litellm_gen.py    # LiteLLMGenerator (100+ models via single interface)
 │   ├── query/
 │   │   ├── __init__.py
 │   │   └── expansion.py      # HyDEExpander, MultiQueryExpander, StepBackExpander
@@ -234,7 +256,7 @@ ragpipe/
 │       ├── pdf.py            # PDFLoader (.pdf)
 │       ├── docx.py           # DocxLoader (.docx)
 │       └── directory.py      # DirectoryLoader (recursive)
-├── tests/                    # 54 tests covering all components
+├── tests/                    # 70 tests covering all components
 ├── examples/                 # Quickstart and OpenAI pipeline examples
 ├── pyproject.toml            # Package config, dependencies, extras
 └── README.md                 # Documentation
@@ -251,8 +273,11 @@ ragpipe/
 | **Ollama-first providers** | Local inference is free, private, and increasingly competitive with cloud APIs. |
 | **FAISS IndexFlatIP** | Exact cosine similarity. No approximate index tuning needed under 100K vectors. |
 | **tiktoken cl100k_base** | Same tokenizer as GPT-4 and text-embedding-3. Token counts match what APIs process. |
-| **Sync-first API** | Simplicity. Wrap with asyncio if needed. Most RAG use cases are batch or request-response. |
-| **Optional dependencies** | Core needs only numpy + tiktoken (~5 MB). FAISS, OpenAI, sentence-transformers are opt-in. |
+| **Async-first with sync compat** | All base classes default to `asyncio.to_thread` for free async. HTTP providers (Ollama, OpenAI, Anthropic) override with native async. Sync methods remain for simple scripts. |
+| **Streaming generation** | Every generator supports `stream()` / `astream()`. Pipeline exposes `stream_query()` for token-by-token output. Server uses WebSocket streaming. |
+| **REST API server** | `python -m ragpipe serve` spins up a FastAPI server with ingest, query, streaming, stats, and evaluation endpoints. API key auth included. |
+| **YAML config** | `PipelineConfig.from_yaml()` enables declarative pipeline definition. Component registry maps type strings to classes. |
+| **Optional dependencies** | Core needs only numpy + tiktoken + httpx (~10 MB). Everything else (OpenAI, Anthropic, FAISS, ChromaDB, Qdrant) is opt-in. |
 | **Abstract base classes** | Every component is a base class. Extend `BaseEmbedder` to add Cohere, Voyage AI, or any provider. |
 | **Separate retrieve() and query()** | `retrieve()` returns chunks without generation — essential for evaluation, debugging, and hybrid workflows. |
 
@@ -292,8 +317,11 @@ class PineconeRetriever(BaseRetriever):
 ```python
 from ragpipe.generators.base import BaseGenerator, GenerationOutput
 
-class AnthropicGenerator(BaseGenerator):
+class MyGenerator(BaseGenerator):
     def generate(self, question, context) -> GenerationOutput: ...
+    async def agenerate(self, question, context) -> GenerationOutput: ...  # optional native async
+    async def astream(self, question, context):  # optional streaming
+        yield "token"
 ```
 
-Every custom component plugs directly into `Pipeline` without any other changes.
+Every custom component plugs directly into `Pipeline`, the REST API server, and YAML config (via the component registry) without any other changes.

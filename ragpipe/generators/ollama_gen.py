@@ -26,15 +26,21 @@ class OllamaGenerator(BaseGenerator):
 
     No API key, no cost, no data leaving your machine.
 
-    Recommended models:
-    - gemma4:26b (best quality/speed for RAG)
-    - qwen3.5 (strong reasoning)
-    - llama3.3 (good all-rounder)
-    - phi-4 (compact, fast)
+    Popular local models (April 2026):
+    - gemma4:27b         — Google, best quality/speed for RAG
+    - qwen3.5:32b        — Alibaba, hybrid thinking, strong reasoning
+    - llama4:scout       — Meta, 10M context, MoE multimodal
+    - llama4:maverick    — Meta, frontier quality, MoE
+    - deepseek-v3.2      — DeepSeek, MIT license, GPT-5 class
+    - deepseek-r1        — DeepSeek, reasoning specialist
+    - nemotron3:super    — Nvidia, Mamba-Transformer MoE
+    - mistral-small:3.2  — Mistral, compact and fast
+    - phi-4              — Microsoft, compact, fast
+    - qwen3-coder        — Alibaba, code specialist
 
     Usage:
-        ollama pull gemma4:26b
-        generator = OllamaGenerator(model="gemma4:26b")
+        ollama pull gemma4:27b
+        generator = OllamaGenerator(model="gemma4:27b")
     """
 
     def __init__(

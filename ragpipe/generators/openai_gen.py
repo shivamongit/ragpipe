@@ -20,14 +20,23 @@ SYSTEM_PROMPT = """You are a precise document analysis assistant. Answer questio
 class OpenAIGenerator(BaseGenerator):
     """Generate cited answers using OpenAI chat completions.
 
-    Builds a structured context window from retrieved chunks,
-    prompts the model to cite sources, and returns the answer
-    with token usage metadata.
+    Supported models (April 2026):
+    - gpt-5.4          — flagship, $2.50/$15 per M tokens, 1M ctx, computer use
+    - gpt-5.4-pro      — max reasoning, $30/$180 per M tokens
+    - gpt-5.3-codex    — agentic coding, $1.75/$14 per M tokens
+    - gpt-5-mini       — balanced, $0.25/$2 per M tokens
+    - gpt-5-nano       — cheapest, $0.05/$0.40 per M tokens
+    - gpt-5            — general purpose, $1.25/$10 per M tokens
+    - gpt-4.1          — legacy flagship, $2/$8 per M tokens
+
+    Usage:
+        generator = OpenAIGenerator(model="gpt-5.4")
+        generator = OpenAIGenerator(model="gpt-5-mini")
     """
 
     def __init__(
         self,
-        model: str = "gpt-4o-mini",
+        model: str = "gpt-5.4",
         api_key: str | None = None,
         temperature: float = 0.1,
         max_tokens: int = 1024,

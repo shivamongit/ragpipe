@@ -203,23 +203,36 @@ queries = expander.expand("Why is our /api/users endpoint slow?")
 
 ### Generators
 
-| Generator | Runs locally | Cost | Models |
-|-----------|-------------|------|--------|
-| `OllamaGenerator` | Yes | Free | gemma4, qwen3.5, llama3.3, phi-4 |
-| `OpenAIGenerator` | No (API) | Paid | gpt-4o-mini, gpt-4o |
-| `AnthropicGenerator` | No (API) | Paid | claude-sonnet-4-20250514, claude-3.5-haiku |
-| `LiteLLMGenerator` | Depends | Varies | 100+ models via single interface |
+| Generator | Runs locally | Cost | Top models (April 2026) |
+|-----------|-------------|------|------------------------|
+| `OllamaGenerator` | Yes | Free | gemma4, qwen3.5, llama4:scout, deepseek-v3.2, nemotron3 |
+| `OpenAIGenerator` | No (API) | Paid | gpt-5.4, gpt-5.4-pro, gpt-5.3-codex, gpt-5-mini, gpt-5-nano |
+| `AnthropicGenerator` | No (API) | Paid | claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 |
+| `LiteLLMGenerator` | Depends | Varies | All above + gemini-3.1-pro, gemini-3-flash, mistral-large-3, deepseek-chat |
 
 ```python
 from ragpipe.generators import OllamaGenerator
 
-generator = OllamaGenerator(model="gemma4:26b", temperature=0.1)  # local, free
+generator = OllamaGenerator(model="gemma4:27b", temperature=0.1)  # local, free
 
 # Optional (needs pip install):
 from ragpipe.generators import OpenAIGenerator, AnthropicGenerator, LiteLLMGenerator
-generator = OpenAIGenerator(model="gpt-4o-mini")
-generator = AnthropicGenerator(model="claude-sonnet-4-20250514")
-generator = LiteLLMGenerator(model="gemini/gemini-2.0-flash")   # any of 100+ models
+
+# OpenAI — GPT-5 family
+generator = OpenAIGenerator(model="gpt-5.4")                       # flagship, 1M ctx
+generator = OpenAIGenerator(model="gpt-5.3-codex")                 # agentic coding
+generator = OpenAIGenerator(model="gpt-5-mini")                    # balanced & cheap
+
+# Anthropic — Claude 4.6 family
+generator = AnthropicGenerator(model="claude-sonnet-4-6")           # best value
+generator = AnthropicGenerator(model="claude-opus-4-6")             # max capability
+
+# LiteLLM — 100+ models via single interface
+generator = LiteLLMGenerator(model="gemini/gemini-3.1-pro")         # Google flagship
+generator = LiteLLMGenerator(model="gemini/gemini-3-flash")         # Google fast
+generator = LiteLLMGenerator(model="mistral/mistral-large-3")       # Mistral flagship
+generator = LiteLLMGenerator(model="deepseek/deepseek-chat")        # DeepSeek V3.2
+generator = LiteLLMGenerator(model="ollama/qwen3.5")                # local via Ollama
 ```
 
 ### Rerankers
