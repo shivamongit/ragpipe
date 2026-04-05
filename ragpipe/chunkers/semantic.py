@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import tiktoken
 
 from ragpipe.core import Chunk, Document
 from ragpipe.chunkers.base import BaseChunker
@@ -32,7 +31,19 @@ class SemanticChunker(BaseChunker):
         self.threshold = threshold
         self.max_chunk_tokens = max_chunk_tokens
         self.min_sentences = min_sentences
-        self._enc = tiktoken.get_encoding(encoding)
+        self._enc = self._load_encoder(encoding)
+
+    @staticmethod
+    def _load_encoder(encoding: str):
+        from rs_bpe.bpe import openai
+        encoders = {
+            "cl100k_base": openai.cl100k_base,
+            "o200k_base": openai.o200k_base,
+        }
+        factory = encoders.get(encoding)
+        if factory is None:
+            raise ValueError(f"Unknown encoding {encoding!r}. Available: {list(encoders)}")
+        return factory()
 
     def _split_sentences(self, text: str) -> list[str]:
         """Simple sentence splitter. Handles common abbreviations."""

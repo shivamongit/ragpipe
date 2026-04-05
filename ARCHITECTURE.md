@@ -217,7 +217,7 @@ ragpipe/
 │   │   └── app.py            # FastAPI REST API + WebSocket streaming
 │   ├── chunkers/
 │   │   ├── base.py           # Abstract BaseChunker
-│   │   ├── token.py          # TokenChunker (tiktoken)
+│   │   ├── token.py          # TokenChunker (rs-bpe)
 │   │   ├── recursive.py      # RecursiveChunker (hierarchical separators)
 │   │   ├── semantic.py       # SemanticChunker (embedding breakpoints)
 │   │   └── contextual.py     # ContextualChunker (LLM context prefix)
@@ -250,15 +250,35 @@ ragpipe/
 │   │   └── expansion.py      # HyDEExpander, MultiQueryExpander, StepBackExpander
 │   ├── evaluation/
 │   │   ├── __init__.py
-│   │   └── metrics.py        # 9 evaluation metrics
-│   └── loaders/
-│       ├── text.py           # TextLoader (.txt, .md)
-│       ├── pdf.py            # PDFLoader (.pdf)
-│       ├── docx.py           # DocxLoader (.docx)
-│       └── directory.py      # DirectoryLoader (recursive)
-├── tests/                    # 70 tests covering all components
+│   │   ├── metrics.py        # 9 retrieval & generation metrics
+│   │   └── llm_judge.py      # LLM-as-Judge (faithfulness, relevance, completeness)
+│   ├── loaders/
+│   │   ├── text.py           # TextLoader (.txt, .md)
+│   │   ├── pdf.py            # PDFLoader (.pdf)
+│   │   ├── docx.py           # DocxLoader (.docx)
+│   │   ├── csv_loader.py     # CSVLoader (.csv, .xlsx — pandas)
+│   │   ├── html_loader.py    # HTMLLoader (.html, URLs — BeautifulSoup)
+│   │   ├── youtube_loader.py # YouTubeLoader (transcript API)
+│   │   └── directory.py      # DirectoryLoader (recursive)
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   └── router.py         # QueryRouter (direct/single/multi-step/summarize)
+│   ├── cache/
+│   │   ├── __init__.py
+│   │   ├── semantic.py       # SemanticCache (cosine similarity threshold)
+│   │   └── embedding.py      # EmbeddingCache (LRU, keyed by text hash)
+│   ├── memory/
+│   │   ├── __init__.py
+│   │   └── conversation.py   # ConversationMemory (multi-turn + contextualization)
+│   └── observability/
+│       ├── __init__.py
+│       └── tracer.py         # Tracer, Span, TracerCallback (structured tracing)
+├── tests/                    # 131 tests covering all components
+├── run_tests.py              # Test runner with per-test timing report
 ├── examples/                 # Quickstart and OpenAI pipeline examples
 ├── pyproject.toml            # Package config, dependencies, extras
+├── CHANGELOG.md              # Release notes
+├── ROADMAP.md                # Transformation roadmap
 └── README.md                 # Documentation
 ```
 
@@ -272,12 +292,12 @@ ragpipe/
 | **Contextual chunking** | Anthropic's research shows 49% fewer retrieval failures. The upfront LLM cost pays for itself in accuracy. |
 | **Ollama-first providers** | Local inference is free, private, and increasingly competitive with cloud APIs. |
 | **FAISS IndexFlatIP** | Exact cosine similarity. No approximate index tuning needed under 100K vectors. |
-| **tiktoken cl100k_base** | Same tokenizer as GPT-4 and text-embedding-3. Token counts match what APIs process. |
+| **rs-bpe cl100k_base** | Rust-based BPE tokenizer, faster than tiktoken with no network dependencies. Same cl100k_base encoding as GPT-4 and text-embedding-3. |
 | **Async-first with sync compat** | All base classes default to `asyncio.to_thread` for free async. HTTP providers (Ollama, OpenAI, Anthropic) override with native async. Sync methods remain for simple scripts. |
 | **Streaming generation** | Every generator supports `stream()` / `astream()`. Pipeline exposes `stream_query()` for token-by-token output. Server uses WebSocket streaming. |
 | **REST API server** | `python -m ragpipe serve` spins up a FastAPI server with ingest, query, streaming, stats, and evaluation endpoints. API key auth included. |
 | **YAML config** | `PipelineConfig.from_yaml()` enables declarative pipeline definition. Component registry maps type strings to classes. |
-| **Optional dependencies** | Core needs only numpy + tiktoken + httpx (~10 MB). Everything else (OpenAI, Anthropic, FAISS, ChromaDB, Qdrant) is opt-in. |
+| **Optional dependencies** | Core needs only numpy + rs-bpe + httpx (~10 MB). Everything else (OpenAI, Anthropic, FAISS, ChromaDB, Qdrant) is opt-in. |
 | **Abstract base classes** | Every component is a base class. Extend `BaseEmbedder` to add Cohere, Voyage AI, or any provider. |
 | **Separate retrieve() and query()** | `retrieve()` returns chunks without generation — essential for evaluation, debugging, and hybrid workflows. |
 

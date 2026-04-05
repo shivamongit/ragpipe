@@ -1,8 +1,6 @@
-"""Token-based chunker using tiktoken."""
+"""Token-based chunker using rs-bpe (fast Rust BPE tokenizer)."""
 
 from __future__ import annotations
-
-import tiktoken
 
 from ragpipe.core import Chunk, Document
 from ragpipe.chunkers.base import BaseChunker
@@ -11,7 +9,7 @@ from ragpipe.chunkers.base import BaseChunker
 class TokenChunker(BaseChunker):
     """Split documents by token count with configurable overlap.
 
-    Uses tiktoken's cl100k_base encoding (same as GPT-4, text-embedding-3).
+    Uses rs-bpe's cl100k_base encoding (same as GPT-4, text-embedding-3).
     Overlap ensures context continuity across chunk boundaries.
     """
 
@@ -23,7 +21,19 @@ class TokenChunker(BaseChunker):
     ):
         self.chunk_size = chunk_size
         self.overlap = overlap
-        self._enc = tiktoken.get_encoding(encoding)
+        self._enc = self._load_encoder(encoding)
+
+    @staticmethod
+    def _load_encoder(encoding: str):
+        from rs_bpe.bpe import openai
+        encoders = {
+            "cl100k_base": openai.cl100k_base,
+            "o200k_base": openai.o200k_base,
+        }
+        factory = encoders.get(encoding)
+        if factory is None:
+            raise ValueError(f"Unknown encoding {encoding!r}. Available: {list(encoders)}")
+        return factory()
 
     def chunk(self, document: Document) -> list[Chunk]:
         tokens = self._enc.encode(document.content)
