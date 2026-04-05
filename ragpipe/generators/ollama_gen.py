@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import json
 import urllib.request
+from collections.abc import AsyncIterator, Iterator
+
+import httpx
 
 from ragpipe.core import RetrievalResult
 from ragpipe.generators.base import BaseGenerator, GenerationOutput
@@ -103,3 +106,103 @@ class OllamaGenerator(BaseGenerator):
                 "total_duration_ns": data.get("total_duration", 0),
             },
         )
+
+    async def agenerate(self, question: str, context: list[RetrievalResult]) -> GenerationOutput:
+        """Native async generate using httpx."""
+        if not context:
+            return GenerationOutput(
+                answer="No relevant context found. Please provide documents first.",
+                model=self.model,
+            )
+
+        context_text = self._build_context(context)
+
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{self.base_url}/api/chat",
+                json={
+                    "model": self.model,
+                    "messages": [
+                        {"role": "system", "content": self.system_prompt},
+                        {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {question}"},
+                    ],
+                    "stream": False,
+                    "options": {"temperature": self.temperature, "num_ctx": self.num_ctx},
+                },
+                timeout=120.0,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+        answer = data.get("message", {}).get("content", "")
+        tokens = data.get("eval_count", 0) + data.get("prompt_eval_count", 0)
+
+        return GenerationOutput(
+            answer=answer,
+            model=self.model,
+            tokens_used=tokens,
+            metadata={
+                "prompt_eval_count": data.get("prompt_eval_count", 0),
+                "eval_count": data.get("eval_count", 0),
+            },
+        )
+
+    def stream(self, question: str, context: list[RetrievalResult]) -> Iterator[str]:
+        """Sync streaming via Ollama's stream mode."""
+        if not context:
+            yield "No relevant context found. Please provide documents first."
+            return
+
+        context_text = self._build_context(context)
+        payload = json.dumps({
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": self.system_prompt},
+                {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {question}"},
+            ],
+            "stream": True,
+            "options": {"temperature": self.temperature, "num_ctx": self.num_ctx},
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            f"{self.base_url}/api/chat",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req) as resp:
+            for line in resp:
+                if line:
+                    chunk = json.loads(line.decode())
+                    content = chunk.get("message", {}).get("content", "")
+                    if content:
+                        yield content
+
+    async def astream(self, question: str, context: list[RetrievalResult]) -> AsyncIterator[str]:
+        """Native async streaming via httpx."""
+        if not context:
+            yield "No relevant context found. Please provide documents first."
+            return
+
+        context_text = self._build_context(context)
+
+        async with httpx.AsyncClient() as client:
+            async with client.stream(
+                "POST",
+                f"{self.base_url}/api/chat",
+                json={
+                    "model": self.model,
+                    "messages": [
+                        {"role": "system", "content": self.system_prompt},
+                        {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {question}"},
+                    ],
+                    "stream": True,
+                    "options": {"temperature": self.temperature, "num_ctx": self.num_ctx},
+                },
+                timeout=120.0,
+            ) as resp:
+                async for line in resp.aiter_lines():
+                    if line:
+                        chunk = json.loads(line)
+                        content = chunk.get("message", {}).get("content", "")
+                        if content:
+                            yield content

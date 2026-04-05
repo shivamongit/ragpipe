@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import time
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -155,6 +157,83 @@ class Pipeline:
             r.rank = i + 1
 
         return results
+
+    async def aingest(self, documents: list[Document]) -> dict[str, int]:
+        """Async ingest: chunk, embed, and index documents."""
+        all_chunks: list[Chunk] = []
+        for doc in documents:
+            chunks = self.chunker.chunk(doc)
+            all_chunks.extend(chunks)
+
+        if not all_chunks:
+            return {"documents": 0, "chunks": 0}
+
+        texts = [c.text for c in all_chunks]
+        embeddings = await self.embedder.aembed(texts)
+
+        for chunk, emb in zip(all_chunks, embeddings):
+            chunk.embedding = emb
+
+        self.retriever.add(all_chunks, embeddings)
+        self._documents.extend(documents)
+
+        return {"documents": len(documents), "chunks": len(all_chunks)}
+
+    async def aquery(self, question: str, top_k: int | None = None) -> GenerationResult:
+        """Async full RAG query: embed → retrieve → rerank → generate."""
+        t0 = time.perf_counter()
+        k = top_k or self.top_k
+
+        query_embedding = (await self.embedder.aembed([question]))[0]
+        results = self.retriever.search(query_embedding, top_k=k)
+
+        if self.reranker and results:
+            results = await self.reranker.arerank(question, results, top_k=self.rerank_top_k)
+
+        for i, r in enumerate(results):
+            r.rank = i + 1
+
+        answer = await self.generator.agenerate(question, results)
+
+        latency = (time.perf_counter() - t0) * 1000
+        return GenerationResult(
+            answer=answer.answer,
+            sources=results,
+            model=answer.model,
+            tokens_used=answer.tokens_used,
+            latency_ms=round(latency, 2),
+            metadata=answer.metadata,
+        )
+
+    async def aretrieve(self, question: str, top_k: int | None = None) -> list[RetrievalResult]:
+        """Async retrieve without generation."""
+        k = top_k or self.top_k
+        query_embedding = (await self.embedder.aembed([question]))[0]
+        results = self.retriever.search(query_embedding, top_k=k)
+
+        if self.reranker and results:
+            results = await self.reranker.arerank(question, results, top_k=self.rerank_top_k)
+
+        for i, r in enumerate(results):
+            r.rank = i + 1
+
+        return results
+
+    async def stream_query(self, question: str, top_k: int | None = None) -> AsyncIterator[str]:
+        """Async streaming query: embed → retrieve → rerank → stream tokens."""
+        k = top_k or self.top_k
+
+        query_embedding = (await self.embedder.aembed([question]))[0]
+        results = self.retriever.search(query_embedding, top_k=k)
+
+        if self.reranker and results:
+            results = await self.reranker.arerank(question, results, top_k=self.rerank_top_k)
+
+        for i, r in enumerate(results):
+            r.rank = i + 1
+
+        async for token in self.generator.astream(question, results):
+            yield token
 
     @property
     def document_count(self) -> int:

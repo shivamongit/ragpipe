@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import urllib.request
 
+import httpx
+
 from ragpipe.embedders.base import BaseEmbedder
 
 DEFAULT_DIMENSIONS = {
@@ -66,6 +68,17 @@ class OllamaEmbedder(BaseEmbedder):
             return data["embeddings"]
         except Exception:
             return [self._embed_single(t) for t in texts]
+
+    async def aembed(self, texts: list[str]) -> list[list[float]]:
+        """Native async embed using httpx."""
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{self.base_url}/api/embed",
+                json={"model": self.model, "input": texts},
+                timeout=120.0,
+            )
+            resp.raise_for_status()
+            return resp.json()["embeddings"]
 
     @property
     def dim(self) -> int:

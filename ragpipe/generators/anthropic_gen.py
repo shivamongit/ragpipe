@@ -1,4 +1,4 @@
-"""OpenAI-based generator with source citation prompting."""
+"""Anthropic Claude generator with async and streaming support."""
 
 from __future__ import annotations
 
@@ -17,41 +17,40 @@ SYSTEM_PROMPT = """You are a precise document analysis assistant. Answer questio
 6. Preserve technical terminology from the source documents"""
 
 
-class OpenAIGenerator(BaseGenerator):
-    """Generate cited answers using OpenAI chat completions.
+class AnthropicGenerator(BaseGenerator):
+    """Generate cited answers using Anthropic Claude models.
 
-    Builds a structured context window from retrieved chunks,
-    prompts the model to cite sources, and returns the answer
-    with token usage metadata.
+    Supports Claude 3.5 Sonnet, Claude 3.5 Haiku, Claude 3 Opus, etc.
+
+    Usage:
+        generator = AnthropicGenerator(model="claude-sonnet-4-20250514")
     """
 
     def __init__(
         self,
-        model: str = "gpt-4o-mini",
+        model: str = "claude-sonnet-4-20250514",
         api_key: str | None = None,
         temperature: float = 0.1,
         max_tokens: int = 1024,
         system_prompt: str | None = None,
     ):
         try:
-            from openai import OpenAI
+            from anthropic import Anthropic, AsyncAnthropic
         except ImportError:
-            raise ImportError("Install openai: pip install 'ragpipe[openai]'")
+            raise ImportError("Install anthropic: pip install 'ragpipe[anthropic]'")
 
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.system_prompt = system_prompt or SYSTEM_PROMPT
-        self._client = OpenAI(api_key=api_key) if api_key else OpenAI()
-
-        from openai import AsyncOpenAI
-        self._aclient = AsyncOpenAI(api_key=api_key) if api_key else AsyncOpenAI()
+        self._client = Anthropic(api_key=api_key) if api_key else Anthropic()
+        self._aclient = AsyncAnthropic(api_key=api_key) if api_key else AsyncAnthropic()
 
     def _build_context(self, results: list[RetrievalResult]) -> str:
         parts = []
         for i, r in enumerate(results):
             label = f"Source {i + 1}"
-            parts.append(f"[{label}] (similarity: {r.score:.3f})\n{r.chunk.text}")
+            parts.append(f"[{label}] (score: {r.score:.3f})\n{r.chunk.text}")
         return "\n\n---\n\n".join(parts)
 
     def generate(self, question: str, context: list[RetrievalResult]) -> GenerationOutput:
@@ -63,34 +62,31 @@ class OpenAIGenerator(BaseGenerator):
 
         context_text = self._build_context(context)
 
-        response = self._client.chat.completions.create(
+        response = self._client.messages.create(
             model=self.model,
+            system=self.system_prompt,
             messages=[
-                {"role": "system", "content": self.system_prompt},
-                {
-                    "role": "user",
-                    "content": f"Context:\n{context_text}\n\nQuestion: {question}",
-                },
+                {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {question}"},
             ],
             temperature=self.temperature,
             max_tokens=self.max_tokens,
         )
 
-        answer = response.choices[0].message.content or ""
-        tokens = response.usage.total_tokens if response.usage else 0
+        answer = response.content[0].text if response.content else ""
+        tokens = (response.usage.input_tokens or 0) + (response.usage.output_tokens or 0)
 
         return GenerationOutput(
             answer=answer,
             model=self.model,
             tokens_used=tokens,
             metadata={
-                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
-                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "input_tokens": response.usage.input_tokens,
+                "output_tokens": response.usage.output_tokens,
             },
         )
 
     async def agenerate(self, question: str, context: list[RetrievalResult]) -> GenerationOutput:
-        """Native async generate using AsyncOpenAI."""
+        """Native async generate using AsyncAnthropic."""
         if not context:
             return GenerationOutput(
                 answer="No relevant context found. Please provide documents first.",
@@ -99,73 +95,65 @@ class OpenAIGenerator(BaseGenerator):
 
         context_text = self._build_context(context)
 
-        response = await self._aclient.chat.completions.create(
+        response = await self._aclient.messages.create(
             model=self.model,
+            system=self.system_prompt,
             messages=[
-                {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {question}"},
             ],
             temperature=self.temperature,
             max_tokens=self.max_tokens,
         )
 
-        answer = response.choices[0].message.content or ""
-        tokens = response.usage.total_tokens if response.usage else 0
+        answer = response.content[0].text if response.content else ""
+        tokens = (response.usage.input_tokens or 0) + (response.usage.output_tokens or 0)
 
         return GenerationOutput(
             answer=answer,
             model=self.model,
             tokens_used=tokens,
             metadata={
-                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
-                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "input_tokens": response.usage.input_tokens,
+                "output_tokens": response.usage.output_tokens,
             },
         )
 
     def stream(self, question: str, context: list[RetrievalResult]) -> Iterator[str]:
-        """Sync streaming via OpenAI's stream mode."""
+        """Sync streaming via Anthropic's stream mode."""
         if not context:
             yield "No relevant context found. Please provide documents first."
             return
 
         context_text = self._build_context(context)
 
-        response = self._client.chat.completions.create(
+        with self._client.messages.stream(
             model=self.model,
+            system=self.system_prompt,
             messages=[
-                {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {question}"},
             ],
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            stream=True,
-        )
-
-        for chunk in response:
-            delta = chunk.choices[0].delta if chunk.choices else None
-            if delta and delta.content:
-                yield delta.content
+        ) as stream:
+            for text in stream.text_stream:
+                yield text
 
     async def astream(self, question: str, context: list[RetrievalResult]) -> AsyncIterator[str]:
-        """Native async streaming via AsyncOpenAI."""
+        """Native async streaming via AsyncAnthropic."""
         if not context:
             yield "No relevant context found. Please provide documents first."
             return
 
         context_text = self._build_context(context)
 
-        response = await self._aclient.chat.completions.create(
+        async with self._aclient.messages.stream(
             model=self.model,
+            system=self.system_prompt,
             messages=[
-                {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": f"Context:\n{context_text}\n\nQuestion: {question}"},
             ],
             temperature=self.temperature,
             max_tokens=self.max_tokens,
-            stream=True,
-        )
-
-        async for chunk in response:
-            delta = chunk.choices[0].delta if chunk.choices else None
-            if delta and delta.content:
-                yield delta.content
+        ) as stream:
+            async for text in stream.text_stream:
+                yield text

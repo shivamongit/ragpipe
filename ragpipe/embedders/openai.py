@@ -35,12 +35,27 @@ class OpenAIEmbedder(BaseEmbedder):
         self.batch_size = batch_size
         self._client = OpenAI(api_key=api_key) if api_key else OpenAI()
 
+        from openai import AsyncOpenAI
+        self._aclient = AsyncOpenAI(api_key=api_key) if api_key else AsyncOpenAI()
+
     def embed(self, texts: list[str]) -> list[list[float]]:
         all_embeddings: list[list[float]] = []
 
         for i in range(0, len(texts), self.batch_size):
             batch = texts[i : i + self.batch_size]
             response = self._client.embeddings.create(model=self.model, input=batch)
+            batch_embs = [item.embedding for item in response.data]
+            all_embeddings.extend(batch_embs)
+
+        return all_embeddings
+
+    async def aembed(self, texts: list[str]) -> list[list[float]]:
+        """Native async embed using AsyncOpenAI."""
+        all_embeddings: list[list[float]] = []
+
+        for i in range(0, len(texts), self.batch_size):
+            batch = texts[i : i + self.batch_size]
+            response = await self._aclient.embeddings.create(model=self.model, input=batch)
             batch_embs = [item.embedding for item in response.data]
             all_embeddings.extend(batch_embs)
 
