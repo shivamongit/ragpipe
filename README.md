@@ -2,15 +2,15 @@
 
 # ragpipe
 
-### Production-Grade RAG Framework for Python
+### Context Engineering Platform for Python
 
-Build, evaluate, and deploy retrieval-augmented generation pipelines with enterprise features — self-correcting CRAG, adaptive retrieval, pipeline auto-tuning, hallucination detection, guardrails, and 215 tests.
+Build, evaluate, and deploy retrieval-augmented generation pipelines with context engineering primitives, knowledge graph RAG, agentic retrieval, self-improving pipelines, simulation testing, and 431 tests.
 
 [![CI](https://github.com/shivamongit/ragpipe/actions/workflows/ci.yml/badge.svg)](https://github.com/shivamongit/ragpipe/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-215%20passed-brightgreen.svg)]()
-[![Version](https://img.shields.io/badge/version-2.2.0-orange.svg)]()
+[![Tests](https://img.shields.io/badge/tests-431%20passed-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/version-3.0.0-orange.svg)]()
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 [Quickstart](#quickstart) &#8226; [Features](#features) &#8226; [Install](#install) &#8226; [Architecture](#architecture) &#8226; [Docs](#components) &#8226; [Roadmap](ROADMAP.md)
@@ -21,7 +21,7 @@ Build, evaluate, and deploy retrieval-augmented generation pipelines with enterp
 
 ## Why ragpipe?
 
-Naive RAG is dead. Production RAG in 2026 needs **self-correcting retrieval**, **adaptive strategy selection**, **hallucination detection**, **PII guardrails**, and **automatic pipeline optimization** — on top of agentic routing, caching, memory, and streaming.
+Naive RAG is dead. Production RAG in 2026 needs **context engineering**, **knowledge graph fusion**, **agentic retrieval**, **self-improving pipelines**, **simulation testing**, **hallucination detection**, and **guardrails** — on top of routing, caching, memory, and streaming.
 
 ragpipe is the only framework that gives you all of this in one place. **Zero of these features exist as built-in modules in LangChain, LlamaIndex, Haystack, or DSPy.**
 
@@ -42,14 +42,15 @@ ragpipe is the only framework that gives you all of this in one place. **Zero of
 </td>
 <td width="50%">
 
-**Intelligence Layer** *(v2.1–v2.2)*
-- 🧠 Self-Correcting CRAG Agent (grade → refine → web fallback)
-- 🎯 Adaptive Retrieval (auto strategy + confidence + fallback chain)
-- 📊 Pipeline Optimizer (DSPy-inspired auto-tuning)
-- ✅ Answer Verifier (claim-level hallucination detection)
-- 🛡️ Guardrails (PII redaction, injection detection, topic filter)
-- 🔀 Agentic RAG Router + Conversation Memory + Semantic Cache
-- 📊 LLM-as-Judge + Pipeline Observability & Tracing
+**Intelligence & Context Layer** *(v2.1–v3.0)*
+- � Context Engineering (programmable context composition)
+- 🕸️ Knowledge Graph RAG (entity extraction + graph search + fusion)
+- 🤖 Agentic Retrieval (plan → retrieve → evaluate → critique)
+- � Self-Improving Pipelines (Bayesian/bandit optimization)
+- 🧪 Retrieval Simulation ("pytest for RAG", 9 failure scenarios)
+- � Plugin System (entry points, discovery, registry)
+- 🔀 Pipeline DAG (branching, conditional, parallel workflows)
+- 📊 Dataset Intelligence (staleness, duplicates, health scoring)
 
 </td>
 </tr>
@@ -67,11 +68,11 @@ ragpipe is the only framework that gives you all of this in one place. **Zero of
 <td width="50%">
 
 **Developer Experience**
-- 215 tests, 0.47s total runtime
+- 431 tests, < 1s total runtime
 - Core needs only `numpy` + `rs-bpe` + `httpx`
 - Everything else is opt-in via extras
 - Every component is an extensible base class
-- April 2026 models (GPT-5.4, Claude 4.6, Gemini 3.1)
+- 6 cookbook examples (basic RAG → DAG pipelines)
 - Zero cloud lock-in — runs fully local with Ollama
 
 </td>
@@ -301,7 +302,7 @@ guard.is_allowed("Who should I vote for?")           # False
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    ragpipe v2.2 — Intelligent RAG Framework                     │
+│                 ragpipe v3.0 — Context Engineering Platform                     │
 │                                                                                 │
 │  python -m ragpipe serve     ──▶   FastAPI + WebSocket server                   │
 │  Pipeline.from_yaml(...)     ──▶   Declarative YAML config                      │
@@ -494,7 +495,7 @@ class CohereEmbedder(BaseEmbedder):
 
 ```bash
 pip install -e ".[dev]"
-python run_tests.py          # 131 tests with per-test timing
+python run_tests.py          # 431 tests with per-test timing
 ```
 
 ---
@@ -503,8 +504,8 @@ python run_tests.py          # 131 tests with per-test timing
 
 | Metric | Value |
 |--------|-------|
-| **Version** | 2.1.0 |
-| **Tests** | 131 passed |
+| **Version** | 3.0.0 |
+| **Tests** | 431 passed |
 | **Test time** | < 1 second |
 | **Core deps** | numpy, rs-bpe, httpx |
 | **Python** | 3.10+ |
@@ -520,7 +521,8 @@ See [ROADMAP.md](ROADMAP.md) for the full transformation plan.
 |-------|--------|------------|
 | **Phase 1** — Production Foundation | ✅ Complete | Async, streaming, REST API, 6 vector stores, YAML config |
 | **Phase 2** — Intelligent Retrieval | ✅ Complete | Agentic router, parent-child chunking, caching, memory, observability |
-| **Phase 3** — Intelligence Layer | Planned | Graph RAG, guardrails, PII protection, Gradio UI |
+| **Phase 3** — Intelligence & Safety | ✅ Complete | CRAG, adaptive retrieval, optimizer, verifier, guardrails |
+| **Phase 4** — Context Engineering | ✅ Complete | Knowledge graphs, DAG pipelines, agentic retrieval, simulation, plugins |
 
 ---
 

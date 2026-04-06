@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ragpipe"
-version = "2.2.0"
-description = "Production-grade modular RAG framework with hybrid search, contextual chunking, query expansion, and pluggable components"
+version = "3.0.0"
+description = "Context Engineering Platform: production-grade RAG with knowledge graphs, agentic retrieval, self-improving pipelines, simulation testing, and pluggable components"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
@@ -48,6 +48,8 @@ chroma = ["chromadb>=0.5.0"]
 qdrant = ["qdrant-client>=1.10.0"]
 config = ["pyyaml>=6.0"]
 ollama = []
+otel = ["opentelemetry-sdk>=1.20.0", "opentelemetry-exporter-otlp-proto-http>=1.20.0"]
+optuna = ["optuna>=3.0.0"]
 data = ["pandas>=2.0.0", "openpyxl>=3.1.0"]
 web = ["beautifulsoup4>=4.12.0"]
 youtube = ["youtube-transcript-api>=0.6.0"]

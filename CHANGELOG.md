@@ -4,6 +4,57 @@ All notable changes to ragpipe are documented here.
 
 ---
 
+## [3.0.0] — April 2026
+
+### Context Engineering Platform
+
+ragpipe evolves from a RAG framework into a **Context Engineering Platform** — programmable context composition, knowledge graph fusion, agentic retrieval, self-improving pipelines, and simulation testing.
+
+#### New Core Modules
+
+- **Context Engineering** (`ragpipe.context`) — `ContextWindow` with programmable operators: add, deduplicate (exact/jaccard/hash), prioritize (relevance/diversity/recency/density/position), compress, filter, budget (token limits), resolve conflicts, and render. Replaces naive top-K stuffing with structured context composition.
+- **Knowledge Graph RAG** (`ragpipe.graph`) — `KnowledgeGraph` with entity/relation extraction (LLM or heuristic), in-memory graph storage, multi-hop BFS search, neighbor lookup, and graph+vector fusion via RRF scoring.
+- **Pipeline DAG** (`ragpipe.pipeline`) — `PipelineDAG` replaces linear pipelines with a directed acyclic graph supporting fan-out (parallel branches), fan-in (merge), conditional routing, edge conditions, topological execution, cycle detection, and per-node error handling.
+- **Agentic Retrieval** (`ragpipe.agents.planner`) — `AgenticPipeline` with `RetrievalPlanner` (query decomposition into multi-step plans: search/compare/aggregate/verify), `RetrievalEvaluator` (quality scoring + retry decisions), and optional `critique_fn` for answer review.
+- **Self-Improving Pipelines** (`ragpipe.optimization.self_improving`) — `SelfImprovingLoop` records quality feedback (LLM-Judge, user, metrics), tracks best-performing parameter configs, and suggests optimized parameters via random search, epsilon-greedy bandit, or Bayesian optimization (Optuna).
+- **Dataset Intelligence** (`ragpipe.intelligence`) — `DatasetAnalyzer` detects empty/short documents, exact + near-duplicate content (Jaccard), stale documents (timestamp-based), low-quality/repetitive text, computes vocabulary richness and health score.
+- **Retrieval Simulation** (`ragpipe.simulation`) — `SimulationRunner` is the "pytest for RAG": tests pipelines against 9 built-in failure scenarios (adversarial, missing context, contradictions, stale data, embedding noise, low relevance, empty retrieval, long queries, ambiguous queries) with custom assertions and latency thresholds.
+- **Plugin System** (`ragpipe.plugins`) — `PluginRegistry` with explicit registration, setuptools entry point discovery, module scanning, category inference from class hierarchy, and `create()` factory method. 9 categories: chunker, embedder, retriever, generator, reranker, loader, agent, guardrail, evaluator.
+
+#### Infrastructure Improvements
+
+- **Retry/Backoff** (`ragpipe.utils.retry`) — `@retry` and `@aretry` decorators with exponential backoff, jitter, configurable max attempts/delay, retryable exception filtering (429/5xx for HTTP). Plus `retry_call()` / `aretry_call()` for non-decorator usage.
+- **Cost Tracking** (`ragpipe.utils.costs`) — `CostTracker` with per-model pricing (OpenAI, Anthropic, Google, local models), budget enforcement, cost-by-model/operation breakdowns, and JSON export.
+- **OpenTelemetry Export** (`ragpipe.observability.otel`) — `OTelExporter` converts ragpipe traces to OTLP format. Backends: console, JSON, OTLP HTTP, OTLP gRPC. Full OTLP JSON export for Jaeger/Grafana Tempo.
+- **Auto-Tracing** — `Pipeline` now accepts optional `tracer=Tracer()` parameter and auto-traces all operations (ingest, embed, retrieve, rerank, generate) with per-step timing and metadata.
+- **Batch Embedding** — `BaseEmbedder.embed_batch()` (sync) and `aembed_batch()` (async) with configurable `batch_size`, `max_concurrency`, and `on_progress` callback.
+- **HybridRetriever Fix** — Pipeline now passes `query_text` through to `HybridRetriever.search()` so BM25 sparse search actually works (was silently degrading to dense-only).
+
+#### CLI Expansion
+
+- `ragpipe init` — scaffold a new RAG project with config, directories, and sample data
+- `ragpipe ingest` — ingest documents from directory or files with verbose logging
+- `ragpipe query` — interactive query with formatted output and timing
+- `ragpipe eval` — run evaluation dataset and display metrics
+- `ragpipe version` — show version info
+
+#### Cookbooks
+
+- `01_basic_rag.py` — Complete local RAG pipeline with Ollama
+- `02_context_engineering.py` — Programmable context composition with ContextWindow
+- `03_knowledge_graph_rag.py` — Entity extraction + graph search + fusion
+- `04_simulation_testing.py` — "pytest for RAG" with failure scenarios
+- `05_agentic_retrieval.py` — Multi-step query decomposition + critique
+- `06_pipeline_dag.py` — Branching, conditional, and parallel workflows
+
+#### Stats
+
+- Test suite expanded from 215 to **431 tests** (all passing in < 1 second)
+- 12 new modules, 8 new test files, 6 cookbook examples
+- Zero new required dependencies (all new features use stdlib only)
+
+---
+
 ## [2.2.0] — April 2026
 
 ### Phase 3: Intelligence & Safety Layer
