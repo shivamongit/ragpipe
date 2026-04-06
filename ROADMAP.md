@@ -1,24 +1,26 @@
 # ragpipe — Transformation Roadmap
 
-> Last updated: April 2026 &middot; Current version: **v2.1.0**
+> Last updated: April 2026 &middot; Current version: **v2.2.0**
 
 ---
 
 ## Current State
 
-ragpipe is a production-grade, modular RAG framework with **131 tests** covering:
+ragpipe is a production-grade, modular RAG framework with **215 tests** covering:
 
 - **6 chunkers** — token, recursive, semantic, contextual, parent-child, custom
 - **6 embedders** — Ollama, SentenceTransformers, OpenAI, Voyage, Jina, custom
 - **6 retrievers** — FAISS, NumPy, BM25, Hybrid RRF, ChromaDB, Qdrant
 - **4 generators** — Ollama, OpenAI GPT-5.4, Anthropic Claude 4.6, LiteLLM (100+)
 - **10+ loaders** — PDF, DOCX, TXT, CSV/Excel, HTML/Web, YouTube, directory
-- **Agentic router** — query classification + multi-step retrieval orchestration
+- **Agentic RAG** — query router, CRAG (self-correcting), adaptive retrieval
 - **Semantic caching** — query cache (cosine similarity) + LRU embedding cache
 - **Conversation memory** — multi-turn RAG with automatic query contextualization
+- **Answer verification** — hallucination detection, claim-level grounding, confidence scores
+- **Pipeline optimizer** — DSPy-inspired auto-tuning of chunk_size, top_k, overlap
+- **Guardrails** — PII redaction, prompt injection detection, topic filtering
 - **LLM-as-Judge** — faithfulness, relevance, completeness scoring (0–5 scale)
 - **Observability** — structured tracing with per-step timing and JSON export
-- **9 eval metrics** — Hit Rate, MRR, P@K, R@K, NDCG, MAP, ROUGE-L, Faithfulness
 - Async-first architecture, streaming generation, FastAPI server, YAML config
 - Latest April 2026 models throughout (GPT-5.4, Claude 4.6, Gemini 3.1)
 
@@ -50,13 +52,24 @@ ragpipe is a production-grade, modular RAG framework with **131 tests** covering
 | — | **Conversation Memory** — multi-turn RAG with auto-contextualization | `ragpipe.memory` | ✅ Complete |
 | — | **rs-bpe Migration** — replaced tiktoken with Rust-based BPE tokenizer | all chunkers | ✅ Complete |
 
-### Phase 3 — Intelligence Layer (Planned)
+### Phase 3 — Intelligence & Safety Layer ✅ `v2.2.0`
+
+| # | Pillar | Module | Status |
+|---|--------|--------|--------|
+| 13 | **Self-Correcting RAG (CRAG)** — relevance grading → refine / web-search / no-answer | `ragpipe.agents.crag` | ✅ Complete |
+| 14 | **Adaptive Retrieval** — query classification → auto strategy + top_k + fallback chain | `ragpipe.agents.adaptive` | ✅ Complete |
+| 15 | **Pipeline Optimizer** — DSPy-inspired grid/random search over chunk_size, top_k, overlap | `ragpipe.optimization` | ✅ Complete |
+| 16 | **Answer Verifier** — claim decomposition, per-claim grounding, hallucination rate | `ragpipe.verification` | ✅ Complete |
+| 17 | **Guardrails: PII Redactor** — regex-based detection of email, phone, SSN, credit card, IP | `ragpipe.guardrails.pii` | ✅ Complete |
+| 18 | **Guardrails: Injection Detector** — pattern-matched prompt injection with risk scoring | `ragpipe.guardrails.injection` | ✅ Complete |
+| 19 | **Guardrails: Topic Filter** — allowlist/blocklist topic restriction with keyword matching | `ragpipe.guardrails.topic` | ✅ Complete |
+
+### Phase 4 — Knowledge Graph & UI (Planned)
 
 | # | Pillar | Notes |
 |---|--------|-------|
-| 13 | **Graph RAG** | Entity extraction, graph builder, community detection, graph+vector retrieval |
-| 14 | **Guardrails & PII** | PII redaction, prompt injection detection, toxicity filter, output validation |
-| — | **Full Agentic RAG** | CRAG (corrective), SelfRAG (self-reflective), ReAct agent loop |
+| 20 | **Graph RAG** | Entity extraction, graph builder, community detection, graph+vector retrieval |
+| — | **SelfRAG / ReAct** | Self-reflective retrieval, ReAct agent loop with tool use |
 | — | **UI & Deployment** | Gradio playground, Docker Compose, Helm chart |
 
 ---
@@ -78,8 +91,12 @@ ragpipe is a production-grade, modular RAG framework with **131 tests** covering
 | Document Loaders | ★★★★☆ | Low | P2 | ✅ v2.1 |
 | Observability & Tracing | ★★★★☆ | Medium | P2 | ✅ v2.1 |
 | Conversation Memory | ★★★★☆ | Medium | P2 | ✅ v2.1 |
-| Graph RAG | ★★★☆☆ | High | P3 | Phase 3 |
-| Guardrails & PII | ★★★☆☆ | Medium | P3 | Phase 3 |
+| CRAG (Self-Correcting) | ★★★★★ | High | P1 | ✅ v2.2 |
+| Adaptive Retrieval | ★★★★★ | Medium | P1 | ✅ v2.2 |
+| Pipeline Optimizer | ★★★★★ | Medium | P1 | ✅ v2.2 |
+| Answer Verifier | ★★★★★ | Medium | P1 | ✅ v2.2 |
+| Guardrails (PII/Injection/Topic) | ★★★★☆ | Medium | P2 | ✅ v2.2 |
+| Graph RAG | ★★★☆☆ | High | P3 | Phase 4 |
 
 ---
 
@@ -87,6 +104,7 @@ ragpipe is a production-grade, modular RAG framework with **131 tests** covering
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.2.0** | April 2026 | CRAG agent, adaptive retrieval, pipeline optimizer, answer verifier, guardrails (PII/injection/topic), 215 tests |
 | **v2.1.0** | April 2026 | Agentic router, parent-child chunking, semantic caching, conversation memory, LLM-as-Judge, observability, 10+ loaders, rs-bpe tokenizer, 131 tests |
 | **v2.0.0** | April 2026 | Async-first, streaming, FastAPI server, Anthropic/LiteLLM/Voyage/Jina, ChromaDB/Qdrant, YAML config, April 2026 models |
 | **v1.0.0** | — | Core pipeline: chunkers, embedders, retrievers, generators, evaluation |

@@ -4,6 +4,28 @@ All notable changes to ragpipe are documented here.
 
 ---
 
+## [2.2.0] — April 2026
+
+### Phase 3: Intelligence & Safety Layer
+
+#### Unique Differentiators (not available in LangChain, LlamaIndex, Haystack, or DSPy)
+
+- **Self-Correcting RAG (CRAG)** (`ragpipe.agents.crag`) — `CRAGAgent` grades each retrieved document for relevance (CORRECT / AMBIGUOUS / INCORRECT), then decides: generate directly, refine knowledge, fall back to web search, or honestly return "I don't know". Based on the CRAG paper (Yan et al., 2024).
+- **Adaptive Retrieval** (`ragpipe.agents.adaptive`) — `AdaptiveRetriever` classifies query complexity (factual / analytical / comparative / exploratory / conversational), auto-selects retrieval strategy (dense / sparse / hybrid / multi-pass), adjusts top_k dynamically, and retries with fallback chain on low confidence.
+- **Pipeline Optimizer** (`ragpipe.optimization`) — `PipelineOptimizer` auto-tunes RAG parameters (chunk_size, top_k, overlap, thresholds) via grid or random search against your evaluation dataset. DSPy-inspired but for infrastructure parameters, not prompts.
+- **Answer Verifier** (`ragpipe.verification`) — `AnswerVerifier` decomposes answers into individual claims, verifies each against source documents, computes per-claim confidence and overall hallucination rate, and outputs a grounded answer with only supported claims.
+- **PII Redactor** (`ragpipe.guardrails.pii`) — Zero-dependency regex-based detection and redaction of email, phone, SSN, credit card, IP address, and date-of-birth patterns. Configurable type filtering.
+- **Prompt Injection Detector** (`ragpipe.guardrails.injection`) — Pattern-matched detection of instruction override, role manipulation, system prompt extraction, delimiter injection, DAN/jailbreak, and encoding attacks. Weighted risk scoring with configurable threshold.
+- **Topic Guardrail** (`ragpipe.guardrails.topic`) — Allowlist/blocklist topic restriction with keyword matching. Restrict your RAG to answer only domain-specific questions.
+
+#### Improvements
+
+- Test suite expanded from 131 to **215 tests** (all passing in < 0.5 seconds)
+- 5 new test files: `test_crag.py`, `test_adaptive.py`, `test_optimizer.py`, `test_verifier.py`, `test_guardrails.py`
+- 4 new modules: `ragpipe.agents.crag`, `ragpipe.agents.adaptive`, `ragpipe.optimization`, `ragpipe.verification`, `ragpipe.guardrails`
+
+---
+
 ## [2.1.0] — April 2026
 
 ### Phase 2: Intelligent Retrieval & Agentic RAG

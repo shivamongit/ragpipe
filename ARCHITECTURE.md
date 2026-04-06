@@ -262,18 +262,31 @@ ragpipe/
 │   │   └── directory.py      # DirectoryLoader (recursive)
 │   ├── agents/
 │   │   ├── __init__.py
-│   │   └── router.py         # QueryRouter (direct/single/multi-step/summarize)
+│   │   ├── router.py         # QueryRouter (direct/single/multi-step/summarize)
+│   │   ├── crag.py           # CRAGAgent (self-correcting RAG with relevance grading)
+│   │   └── adaptive.py       # AdaptiveRetriever (auto strategy + confidence scoring)
 │   ├── cache/
 │   │   ├── __init__.py
 │   │   ├── semantic.py       # SemanticCache (cosine similarity threshold)
 │   │   └── embedding.py      # EmbeddingCache (LRU, keyed by text hash)
+│   ├── optimization/
+│   │   ├── __init__.py
+│   │   └── optimizer.py      # PipelineOptimizer (grid/random search, DSPy-inspired)
+│   ├── verification/
+│   │   ├── __init__.py
+│   │   └── verifier.py       # AnswerVerifier (claim decomposition, hallucination detection)
+│   ├── guardrails/
+│   │   ├── __init__.py
+│   │   ├── pii.py            # PIIRedactor (email, phone, SSN, credit card, IP)
+│   │   ├── injection.py      # PromptInjectionDetector (pattern + risk scoring)
+│   │   └── topic.py          # TopicGuardrail (allowlist/blocklist filtering)
 │   ├── memory/
 │   │   ├── __init__.py
 │   │   └── conversation.py   # ConversationMemory (multi-turn + contextualization)
 │   └── observability/
 │       ├── __init__.py
 │       └── tracer.py         # Tracer, Span, TracerCallback (structured tracing)
-├── tests/                    # 131 tests covering all components
+├── tests/                    # 215 tests covering all components
 ├── run_tests.py              # Test runner with per-test timing report
 ├── examples/                 # Quickstart and OpenAI pipeline examples
 ├── pyproject.toml            # Package config, dependencies, extras
