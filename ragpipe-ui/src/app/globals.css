@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #e5e5e5;
+  --muted: #171717;
+  --muted-foreground: #a3a3a3;
+  --border: #262626;
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
+  --card: #111111;
+  --card-foreground: #e5e5e5;
+  --destructive: #ef4444;
+  --success: #22c55e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #333 transparent;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Markdown in chat messages */
+.prose-chat p { margin: 0.5em 0; }
+.prose-chat ul, .prose-chat ol { margin: 0.5em 0; padding-left: 1.5em; }
+.prose-chat li { margin: 0.2em 0; }
+.prose-chat code {
+  background: #1e1e1e;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-family: var(--font-mono), monospace;
+}
+.prose-chat pre {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+.prose-chat pre code {
+  background: none;
+  padding: 0;
+}
+.prose-chat a { color: #60a5fa; text-decoration: underline; }
+.prose-chat blockquote {
+  border-left: 3px solid #404040;
+  padding-left: 1em;
+  color: #999;
+  margin: 0.5em 0;
+}
+
+/* Typing animation */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.typing-cursor::after {
+  content: "▋";
+  animation: blink 1s step-end infinite;
+  color: #60a5fa;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Slide up animation */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out;
+}

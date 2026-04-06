@@ -25,7 +25,7 @@ def create_app(pipeline: Pipeline | None = None, api_key: str | None = None):
     app = FastAPI(
         title="ragpipe",
         description="Production-grade RAG pipeline API",
-        version="2.0.0",
+        version="3.0.0",
     )
 
     app.add_middleware(
