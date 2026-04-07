@@ -252,7 +252,5 @@ class CommunityDetector:
         type_str = ", ".join(sorted(types))
         if len(names) <= 3:
             return f"Community of {type_str} entities: {', '.join(names)}."
-        return (
-            f"Community of {len(names)} entities ({type_str}) including "
-            f"{', '.join(names[:3])}, and others."
-        )
+        top_names = ", ".join(names[:3])
+        return f"Community of {len(names)} entities ({type_str}) including {top_names}, and others."

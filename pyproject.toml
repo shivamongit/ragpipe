@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ragpipe"
-version = "2.2.0"
+version = "3.0.0"
 description = "Production-grade modular RAG framework with hybrid search, contextual chunking, query expansion, and pluggable components"
 readme = "README.md"
 license = {text = "MIT"}

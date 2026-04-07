@@ -1,86 +1,114 @@
 <div align="center">
 
+<img src="https://img.shields.io/badge/🔬-ragpipe-blue?style=for-the-badge&labelColor=1a1a2e&color=16213e" alt="ragpipe" height="60">
+
 # ragpipe
 
-### Production-Grade RAG Framework for Python
+### The Intelligent RAG Framework
 
-Build, evaluate, and deploy retrieval-augmented generation pipelines with enterprise features — self-correcting CRAG, adaptive retrieval, pipeline auto-tuning, hallucination detection, guardrails, and 215 tests.
+Build, evaluate, and deploy production-grade retrieval-augmented generation pipelines with **Knowledge Graph RAG**, **self-correcting CRAG**, **SelfRAG**, **ReAct agents**, **adaptive retrieval**, **hallucination detection**, **pipeline auto-tuning**, **guardrails**, and a composable **SmartPipeline** — all in one framework.
 
 [![CI](https://github.com/shivamongit/ragpipe/actions/workflows/ci.yml/badge.svg)](https://github.com/shivamongit/ragpipe/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-215%20passed-brightgreen.svg)]()
-[![Version](https://img.shields.io/badge/version-2.2.0-orange.svg)]()
+[![Tests](https://img.shields.io/badge/tests-314%20passed-brightgreen.svg)]()
+[![Version](https://img.shields.io/badge/version-3.0.0-orange.svg)]()
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
-[Quickstart](#quickstart) &#8226; [Features](#features) &#8226; [Install](#install) &#8226; [Architecture](#architecture) &#8226; [Docs](#components) &#8226; [Roadmap](ROADMAP.md)
+[Quickstart](#-quickstart) &#8226; [Features](#-features) &#8226; [Install](#-install) &#8226; [Architecture](#-architecture) &#8226; [Docs](#-components) &#8226; [Roadmap](ROADMAP.md) &#8226; [Analysis](PROGRESS_REPORT.md)
 
 </div>
 
 ---
 
-## Why ragpipe?
+## ⚡ Why ragpipe?
 
-Naive RAG is dead. Production RAG in 2026 needs **self-correcting retrieval**, **adaptive strategy selection**, **hallucination detection**, **PII guardrails**, and **automatic pipeline optimization** — on top of agentic routing, caching, memory, and streaming.
+> **Naive RAG is dead.** Production RAG in 2026 needs knowledge graphs, self-correcting retrieval, adaptive strategy selection, reasoning agents, hallucination detection, PII guardrails, and automatic pipeline optimization — on top of agentic routing, caching, memory, and streaming.
 
-ragpipe is the only framework that gives you all of this in one place. **Zero of these features exist as built-in modules in LangChain, LlamaIndex, Haystack, or DSPy.**
+**ragpipe is the only framework that gives you all of this in one place.** These features don't exist as built-in modules in LangChain, LlamaIndex, Haystack, or DSPy:
 
-## Features
+| Capability | ragpipe | LangChain | LlamaIndex | Haystack | DSPy |
+|:-----------|:-------:|:---------:|:----------:|:--------:|:----:|
+| Knowledge Graph RAG | ✅ Built-in | ❌ | Partial | ❌ | ❌ |
+| Self-Correcting CRAG | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
+| SelfRAG (reflection tokens) | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
+| ReAct Agent (tool use) | ✅ Built-in | Partial | ❌ | ❌ | ❌ |
+| Adaptive Retrieval | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
+| Pipeline Auto-Tuning | ✅ Built-in | ❌ | ❌ | ❌ | Prompts only |
+| Answer Verification | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
+| Composable SmartPipeline | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
+| Zero-Dep Guardrails | ✅ Built-in | External | ❌ | ❌ | ❌ |
+| Community Detection | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
+
+---
+
+## 🚀 Features
 
 <table>
 <tr>
 <td width="50%">
 
-**Core Pipeline**
-- 6 chunking strategies (token, recursive, semantic, contextual, parent-child, custom)
-- 6 embedder providers (Ollama, SentenceTransformers, OpenAI, Voyage, Jina, custom)
-- 6 retriever backends (FAISS, NumPy, BM25, Hybrid RRF, ChromaDB, Qdrant)
-- 4 generator providers (Ollama, OpenAI, Anthropic, LiteLLM 100+)
-- Cross-encoder reranking
-- Query expansion (HyDE, Multi-Query, Step-Back)
+### Core Pipeline
+- 🧩 **6 chunking strategies** — token, recursive, semantic, contextual, parent-child
+- 🔍 **6 embedder providers** — Ollama, SentenceTransformers, OpenAI, Voyage, Jina
+- 📦 **6 retriever backends** — FAISS, NumPy, BM25, Hybrid RRF, ChromaDB, Qdrant
+- 🤖 **4 generator providers** — Ollama, OpenAI, Anthropic, LiteLLM (100+ models)
+- ↔️ Cross-encoder reranking
+- 🔎 Query expansion (HyDE, Multi-Query, Step-Back)
+- 📄 10+ document loaders (PDF, DOCX, CSV, HTML, YouTube)
 
 </td>
 <td width="50%">
 
-**Intelligence Layer** *(v2.1–v2.2)*
-- 🧠 Self-Correcting CRAG Agent (grade → refine → web fallback)
-- 🎯 Adaptive Retrieval (auto strategy + confidence + fallback chain)
+### Intelligence Layer
+- 🕸️ **Knowledge Graph RAG** — entity extraction, graph builder, community detection, graph+vector hybrid retrieval
+- 🧠 **Self-Correcting CRAG** — document relevance grading → refine → web fallback
+- 🪞 **SelfRAG** — self-reflective retrieval with relevance/support/usefulness tokens
+- ⚡ **ReAct Agent** — reasoning + acting loop with pluggable tools
+- 🎯 **Adaptive Retrieval** — auto strategy + confidence + fallback chain
+- 🔀 **SmartPipeline** — composable orchestrator wiring all modules together
 - 📊 Pipeline Optimizer (DSPy-inspired auto-tuning)
-- ✅ Answer Verifier (claim-level hallucination detection)
-- 🛡️ Guardrails (PII redaction, injection detection, topic filter)
-- 🔀 Agentic RAG Router + Conversation Memory + Semantic Cache
-- 📊 LLM-as-Judge + Pipeline Observability & Tracing
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-**Production Infrastructure**
-- Async-first (`aingest`, `aquery`, `aretrieve`, `stream_query`)
-- Streaming generation on every provider
-- FastAPI REST API + WebSocket streaming
-- YAML declarative pipeline config
-- 10+ document loaders (PDF, DOCX, TXT, CSV, HTML, YouTube, directory)
+### Safety & Evaluation
+- ✅ **Answer Verifier** — claim-level hallucination detection & grounding
+- 🛡️ **Guardrails** — PII redaction, injection detection, topic filtering
+- ⚖️ **LLM-as-Judge** — faithfulness, relevance, completeness (0–5 scale)
+- 📈 **9 metrics** — Hit Rate, MRR, P@K, R@K, NDCG, MAP, ROUGE-L, Context Precision, Faithfulness
 
 </td>
 <td width="50%">
 
-**Developer Experience**
-- 215 tests, 0.47s total runtime
-- Core needs only `numpy` + `rs-bpe` + `httpx`
-- Everything else is opt-in via extras
-- Every component is an extensible base class
-- April 2026 models (GPT-5.4, Claude 4.6, Gemini 3.1)
-- Zero cloud lock-in — runs fully local with Ollama
+### Production Infrastructure
+- ⚡ Async-first (`aingest`, `aquery`, `aretrieve`, `stream_query`)
+- 🌊 Streaming generation on every provider
+- 🌐 FastAPI REST API + WebSocket streaming
+- 📋 YAML declarative pipeline config
+- 💾 Semantic cache + embedding cache
+- 💬 Conversation memory (multi-turn RAG)
+- 📊 Structured tracing & observability
+- 🔒 API key authentication
 
 </td>
 </tr>
 </table>
 
+### Developer Experience
+
+- **314 tests**, 0.74s total runtime — every module tested
+- Core needs only `numpy` + `rs-bpe` + `httpx` (~10 MB)
+- Everything else is opt-in via extras
+- Every component is an extensible base class
+- April 2026 models (GPT-5.4, Claude 4.6, Gemini 3.1)
+- **Zero cloud lock-in** — runs fully local with Ollama
+
 ---
 
-## Install
+## 📦 Install
 
 ```bash
 pip install ragpipe                          # core (chunkers + retrieval + BM25)
@@ -108,7 +136,7 @@ pip install 'ragpipe[all]'                  # everything
 
 ---
 
-## Quickstart
+## 🎯 Quickstart
 
 ### 10-Line Hybrid Search Pipeline
 
@@ -134,18 +162,156 @@ result = pipe.query("What are the key findings?")
 print(result.answer)
 ```
 
+### 🕸️ Knowledge Graph RAG *(v3.0)*
+
+```python
+from ragpipe.graph import EntityExtractor, GraphBuilder, CommunityDetector, GraphRetriever
+
+# Build knowledge graph from documents
+extractor = EntityExtractor(extract_fn=my_llm)
+builder = GraphBuilder(extractor=extractor)
+result = builder.build(documents)
+
+graph = result.graph
+print(f"Entities: {graph.entity_count}, Relationships: {graph.relationship_count}")
+
+# Detect communities for global search
+detector = CommunityDetector(summarize_fn=my_llm)
+communities = detector.detect(graph)
+
+# Graph-enhanced retrieval (local + global + vector hybrid)
+retriever = GraphRetriever(
+    graph=graph,
+    communities=communities,
+    vector_retrieve_fn=pipe.retrieve,
+    generate_fn=my_llm,
+    strategy="hybrid",     # "local", "global", or "hybrid"
+    max_hops=2,
+)
+result = retriever.retrieve("How does Company X relate to Project Y?")
+print(result.answer)
+print(result.entities_used)     # entities traversed
+print(result.communities_used)  # communities consulted
+```
+
+### 🪞 SelfRAG Agent *(v3.0)*
+
+```python
+from ragpipe.agents import SelfRAGAgent
+
+agent = SelfRAGAgent(
+    retrieve_fn=my_retrieve,
+    generate_fn=my_generate,
+    reflect_fn=my_llm,          # LLM generates reflection tokens
+    max_iterations=3,
+)
+
+result = agent.query("What is quantum computing?")
+print(result.answer)
+print(result.reflection.retrieval_needed)  # RetrievalDecision.RETRIEVE
+print(result.reflection.support_level)     # SupportLevel.FULLY_SUPPORTED
+print(result.reflection.usefulness)        # 5 (1-5 scale)
+print(result.confidence)                   # 0.92
+```
+
+### ⚡ ReAct Agent *(v3.0)*
+
+```python
+from ragpipe.agents import ReActAgent, Tool
+
+agent = ReActAgent(
+    reason_fn=my_llm,
+    tools=[
+        Tool(name="search", description="Search the knowledge base", fn=my_search),
+        Tool(name="calculate", description="Perform calculations", fn=my_calc),
+        Tool(name="lookup", description="Look up entity details", fn=my_lookup),
+    ],
+    max_steps=5,
+)
+
+result = agent.query("What is 15% of Company X's revenue from the latest report?")
+print(result.answer)
+print(result.steps)       # [ReActStep(thought=..., action=..., observation=...), ...]
+print(result.tools_used)  # ["search", "calculate"]
+```
+
+### 🔗 SmartPipeline — Composable Intelligence *(v3.0)*
+
+```python
+from ragpipe.agents import SmartPipeline
+from ragpipe.guardrails import PIIRedactor, PromptInjectionDetector, TopicGuardrail
+from ragpipe.cache import SemanticCache
+from ragpipe.memory import ConversationMemory
+from ragpipe.verification import AnswerVerifier
+
+# Wire everything together — single .query() orchestrates all modules
+smart = SmartPipeline(
+    pipeline=my_pipeline,
+    guardrails=[PromptInjectionDetector(), TopicGuardrail(allowed_topics=["finance"])],
+    pii_redactor=PIIRedactor(),
+    cache=SemanticCache(embed_fn=embed, threshold=0.95),
+    memory=ConversationMemory(contextualize_fn=llm),
+    verifier=AnswerVerifier(verify_fn=llm),
+    on_guardrail_fail="block",
+)
+
+# One call: guardrails → cache → memory → route → retrieve → verify → respond
+result = smart.query("What are the tax implications of stock options?")
+print(result.answer)
+print(result.guardrail_checks)  # {"injection": False, "topic": True}
+print(result.verification)      # {"confidence": 0.95, "hallucination_rate": 0.0}
+print(result.cached)            # False
+print(result.latency_ms)        # 245.3
+```
+
+### 🧠 Self-Correcting CRAG Agent
+
+```python
+from ragpipe.agents import CRAGAgent
+
+agent = CRAGAgent(
+    grade_fn=my_llm,          # grades each doc: CORRECT / AMBIGUOUS / INCORRECT
+    retrieve_fn=my_retrieve,
+    generate_fn=my_generate,
+    web_search_fn=my_search,   # optional web fallback
+)
+
+result = agent.query("What caused the 2024 market correction?")
+print(result.answer)           # grounded answer
+print(result.action_taken)     # direct_generate / refined_generate / web_search / no_answer
+print(result.confidence)       # 0.0–1.0
+```
+
+### 🎯 Adaptive Retrieval
+
+```python
+from ragpipe.agents import AdaptiveRetriever
+
+retriever = AdaptiveRetriever(
+    strategies={"dense": dense_fn, "sparse": sparse_fn, "hybrid": hybrid_fn},
+    confidence_threshold=0.3,
+)
+
+# Auto: classify query → select strategy → adjust top_k → retry on low confidence
+result = retriever.retrieve("Compare FAISS vs ChromaDB performance")
+print(result.strategy_used)     # RetrievalStrategy.MULTI_PASS
+print(result.query_complexity)  # QueryComplexity.COMPARATIVE
+```
+
+<details>
+<summary><b>More examples: Router, Memory, Cache, Optimizer, Verifier, Guardrails, Evaluation, Tracing</b></summary>
+
 ### Agentic RAG Router
 
 ```python
 from ragpipe.agents import QueryRouter
 
 router = QueryRouter(
-    classify_fn=my_llm,           # LLM classifies query complexity
-    retrieval_fn=my_retrieve,     # your retrieval function
-    generation_fn=my_generate,    # your generation function
+    classify_fn=my_llm,
+    retrieval_fn=my_retrieve,
+    generation_fn=my_generate,
 )
-
-# Automatically routes: direct answer / single retrieval / multi-step / summarize
+# Routes: direct answer / single retrieval / multi-step / summarize
 result = router.query("Compare the Q1 and Q2 financial results")
 ```
 
@@ -154,12 +320,7 @@ result = router.query("Compare the Q1 and Q2 financial results")
 ```python
 from ragpipe.memory import ConversationMemory
 
-memory = ConversationMemory(
-    contextualize_fn=my_llm,      # rewrites follow-ups as standalone queries
-    max_history=20,
-)
-
-# Multi-turn: automatically contextualizes follow-up questions
+memory = ConversationMemory(contextualize_fn=my_llm, max_history=20)
 result = memory.query("What were the key findings?", retrieval_fn=my_pipeline)
 result = memory.query("How does that compare to last quarter?", retrieval_fn=my_pipeline)
 ```
@@ -170,26 +331,47 @@ result = memory.query("How does that compare to last quarter?", retrieval_fn=my_
 from ragpipe.cache import SemanticCache
 
 cache = SemanticCache(embed_fn=my_embed, threshold=0.95, ttl=3600)
-
-# Skips retrieval + generation if a similar query was recently answered
-cached = cache.get("What is FAISS?")
-if cached is None:
-    result = pipe.query("What is FAISS?")
-    cache.put("What is FAISS?", result.answer, embedding)
+cached = cache.lookup("What is FAISS?")
 ```
 
-### LLM-as-Judge Evaluation
+### Pipeline Optimizer
+
+```python
+from ragpipe.optimization import PipelineOptimizer, ParameterSpace
+
+optimizer = PipelineOptimizer(pipeline_factory=build_pipeline, eval_fn=evaluate, eval_dataset=qa_pairs)
+result = optimizer.optimize(ParameterSpace(chunk_size=[256, 512, 1024], top_k=[3, 5, 10]))
+print(result.best_params)   # {"chunk_size": 512, "top_k": 5}
+```
+
+### Answer Verification
+
+```python
+from ragpipe.verification import AnswerVerifier
+
+verifier = AnswerVerifier(verify_fn=my_llm)
+result = verifier.verify(answer="Paris is the capital.", sources=["Paris is the capital of France."])
+print(result.hallucination_rate)  # 0.0
+```
+
+### Guardrails
+
+```python
+from ragpipe.guardrails import PIIRedactor, PromptInjectionDetector, TopicGuardrail
+
+PIIRedactor().redact("Email john@test.com")  # "Email [EMAIL_REDACTED]"
+PromptInjectionDetector().check("Ignore instructions").is_injection  # True
+TopicGuardrail(allowed_topics=["finance"]).is_allowed("Tax question?")  # True
+```
+
+### LLM-as-Judge
 
 ```python
 from ragpipe.evaluation import LLMJudge
 
 judge = LLMJudge(judge_fn=my_llm)
-scores = judge.evaluate(
-    question="What is RAG?",
-    answer=result.answer,
-    context=[s.chunk.text for s in result.sources],
-)
-print(scores)  # {"faithfulness": 4.5, "relevance": 5.0, "completeness": 4.0, "overall": 4.5}
+scores = judge.evaluate(question="What is RAG?", answer=answer, context=context)
+# {"faithfulness": 4.5, "relevance": 5.0, "completeness": 4.0, "overall": 4.5}
 ```
 
 ### Pipeline Observability
@@ -200,135 +382,55 @@ from ragpipe.observability import Tracer
 tracer = Tracer()
 with tracer.span("retrieval", metadata={"top_k": 5}):
     results = pipe.retrieve("What is X?")
-with tracer.span("generation"):
-    answer = pipe.query("What is X?")
-
-print(tracer.summary())    # per-step timing breakdown
-print(tracer.to_json())    # structured JSON trace for logging
+print(tracer.summary())    # per-step timing
+print(tracer.to_json())    # structured JSON
 ```
 
-### Self-Correcting CRAG Agent *(v2.2)*
+</details>
 
-```python
-from ragpipe.agents import CRAGAgent
+---
 
-agent = CRAGAgent(
-    grade_fn=my_llm,          # grades each doc: CORRECT / AMBIGUOUS / INCORRECT
-    retrieve_fn=my_retrieve,   # your retrieval function
-    generate_fn=my_generate,   # your generation function
-    web_search_fn=my_search,   # optional web fallback when docs are irrelevant
-)
+## 🏗️ Architecture
 
-result = agent.query("What caused the 2024 market correction?")
-print(result.answer)           # grounded answer
-print(result.action_taken)     # direct_generate / refined_generate / web_search / no_answer
-print(result.confidence)       # 0.0–1.0
 ```
-
-### Adaptive Retrieval *(v2.2)*
-
-```python
-from ragpipe.agents import AdaptiveRetriever
-
-retriever = AdaptiveRetriever(
-    strategies={"dense": dense_fn, "sparse": sparse_fn, "hybrid": hybrid_fn},
-    confidence_threshold=0.3,
-)
-
-# Automatically classifies query → selects strategy → adjusts top_k → retries on low confidence
-result = retriever.retrieve("Compare FAISS vs ChromaDB performance")
-print(result.strategy_used)     # RetrievalStrategy.MULTI_PASS
-print(result.query_complexity)  # QueryComplexity.COMPARATIVE
-```
-
-### Pipeline Optimizer *(v2.2)*
-
-```python
-from ragpipe.optimization import PipelineOptimizer, ParameterSpace
-
-optimizer = PipelineOptimizer(
-    pipeline_factory=build_pipeline,  # fn(**params) -> Pipeline
-    eval_fn=evaluate_pipeline,        # fn(pipeline, dataset) -> float
-    eval_dataset=my_qa_pairs,
-)
-
-result = optimizer.optimize(
-    ParameterSpace(chunk_size=[256, 512, 1024], top_k=[3, 5, 10], overlap=[32, 64]),
-    method="grid",
-)
-print(result.best_params)   # {"chunk_size": 512, "top_k": 5, "overlap": 64}
-print(result.best_score)    # 0.87
-```
-
-### Answer Verification *(v2.2)*
-
-```python
-from ragpipe.verification import AnswerVerifier
-
-verifier = AnswerVerifier(verify_fn=my_llm)
-result = verifier.verify(
-    answer="Paris is the capital of France. It was founded in 250 BC.",
-    sources=["Paris is the capital of France and the largest city."],
-)
-print(result.hallucination_rate)  # 0.5 (1 of 2 claims unsupported)
-print(result.grounded_answer)     # "Paris is the capital of France."
-```
-
-### Guardrails *(v2.2)*
-
-```python
-from ragpipe.guardrails import PIIRedactor, PromptInjectionDetector, TopicGuardrail
-
-# PII Redaction
-redactor = PIIRedactor()
-clean = redactor.redact("Email john@test.com or call 555-123-4567")
-# → "Email [EMAIL_REDACTED] or call [PHONE_REDACTED]"
-
-# Prompt Injection Detection
-detector = PromptInjectionDetector()
-result = detector.check("Ignore all previous instructions")
-print(result.is_injection, result.risk_score)  # True, 0.9
-
-# Topic Filtering
-guard = TopicGuardrail(allowed_topics=["finance", "tax"], blocked_topics=["politics"])
-guard.is_allowed("What are the tax implications?")  # True
-guard.is_allowed("Who should I vote for?")           # False
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                          ragpipe v3.0 — The Intelligent RAG Framework                    │
+│                                                                                          │
+│  SmartPipeline.query(...)   ──▶  Guardrails → Cache → Memory → Route → Retrieve → Verify│
+│  GraphRetriever.retrieve()  ──▶  Entity extraction → Graph traversal → Community search  │
+│  SelfRAGAgent.query(...)    ──▶  Retrieve? → Relevance → Support → Usefulness → Iterate  │
+│  ReActAgent.query(...)      ──▶  Think → Act → Observe → Repeat → Final Answer           │
+│  python -m ragpipe serve    ──▶  FastAPI + WebSocket streaming server                     │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+    ┌──────────────────────────────────────────┼──────────────────────────────────────────┐
+    │                                          │                                          │
+    │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐  ┌──────────┐ │
+    │  │  Loader  │→│ Chunker  │→│ Embedder │→│Retriever │→│Reranker│→│Generator │ │
+    │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └────────┘  └──────────┘ │
+    │       │             │             │             │                          │         │
+    │  Text/PDF/     Token         Ollama        FAISS         Cross-       Ollama        │
+    │  DOCX/CSV/     Recursive     SentTrans     NumPy         Encoder      OpenAI        │
+    │  HTML/Web      Semantic      OpenAI        BM25                       Anthropic      │
+    │  YouTube       Contextual    Voyage        Hybrid RRF                 LiteLLM        │
+    │  Directory     ParentChild   Jina          ChromaDB                   (100+)         │
+    │                                            Qdrant                                    │
+    └──────────────────────────────────────────────────────────────────────────────────────┘
+                                              │
+    ┌────────────────┬────────────────┬────────┴───────┬─────────────────┬─────────────────┐
+    │  Knowledge     │  Semantic      │  LLM-as-       │  Pipeline       │  Query           │
+    │  Graph         │  Cache         │  Judge          │  Tracer         │  Expansion       │
+    │  ┌───────────┐ │  ┌───────────┐ │  ┌───────────┐ │  ┌───────────┐ │  ┌─────────────┐ │
+    │  │ Entities  │ │  │ Query     │ │  │ Faith.    │ │  │ Spans     │ │  │ HyDE        │ │
+    │  │ Relations │ │  │ Embedding │ │  │ Relevance │ │  │ Timing    │ │  │ Multi-Query │ │
+    │  │ Community │ │  │ LRU       │ │  │ Complete  │ │  │ JSON      │ │  │ Step-Back   │ │
+    │  └───────────┘ │  └───────────┘ │  └───────────┘ │  └───────────┘ │  └─────────────┘ │
+    └────────────────┴────────────────┴────────────────┴─────────────────┴─────────────────┘
 ```
 
 ---
 
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    ragpipe v2.2 — Intelligent RAG Framework                     │
-│                                                                                 │
-│  python -m ragpipe serve     ──▶   FastAPI + WebSocket server                   │
-│  Pipeline.from_yaml(...)     ──▶   Declarative YAML config                      │
-│  QueryRouter.query(...)      ──▶   Agentic routing (direct/single/multi/sum)    │
-│  ConversationMemory.query()  ──▶   Multi-turn with auto-contextualization       │
-└─────────────────────────────────────────────────────────────────────────────────┘
-                                          │
-  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-  │  Loader  │─▶│ Chunker  │─▶│ Embedder │─▶│Retriever │─▶│ Reranker │─▶│Generator │
-  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────────┘
-       │             │             │             │                            │
-  Text/PDF/     Token         Ollama        FAISS          Cross-         Ollama
-  DOCX/CSV/     Recursive     SentTrans     NumPy          Encoder        OpenAI
-  HTML/Web      Semantic      OpenAI        BM25                          Anthropic
-  YouTube       Contextual    Voyage        Hybrid RRF                    LiteLLM
-  Directory     ParentChild   Jina          ChromaDB                      (100+)
-                                            Qdrant
-       │                                                        │
-  ┌────┴────┐   ┌────────────┐   ┌───────────┐   ┌─────────────┴─────────────┐
-  │ Semantic│   │  LLM-as-   │   │  Pipeline  │   │     Query Expansion       │
-  │  Cache  │   │   Judge    │   │   Tracer   │   │  HyDE / Multi / StepBack  │
-  └─────────┘   └────────────┘   └────────────┘   └───────────────────────────┘
-```
-
----
-
-## Components
+## 🧩 Components
 
 ### Chunkers
 
@@ -344,11 +446,11 @@ guard.is_allowed("Who should I vote for?")           # False
 
 | Embedder | Local | Cost | Dimensions |
 |----------|:-----:|------|:----------:|
-| `OllamaEmbedder` | Yes | Free | 384–1024 |
-| `SentenceTransformerEmbedder` | Yes | Free | 384–1024 |
-| `OpenAIEmbedder` | No | Paid | 1536–3072 |
-| `VoyageEmbedder` | No | Paid | 512–1536 |
-| `JinaEmbedder` | No | Paid | 512–1024 |
+| `OllamaEmbedder` | ✅ | Free | 384–1024 |
+| `SentenceTransformerEmbedder` | ✅ | Free | 384–1024 |
+| `OpenAIEmbedder` | ☁️ | Paid | 1536–3072 |
+| `VoyageEmbedder` | ☁️ | Paid | 512–1536 |
+| `JinaEmbedder` | ☁️ | Paid | 512–1024 |
 
 ### Retrievers
 
@@ -360,15 +462,28 @@ guard.is_allowed("Who should I vote for?")           # False
 | `QdrantRetriever` | Dense | qdrant-client | Scalable cloud + self-hosted |
 | `BM25Retriever` | Sparse | none | Exact keyword matching |
 | `HybridRetriever` | Dense + Sparse | none | **Best overall recall** |
+| `GraphRetriever` | Graph + Vector | none | **Multi-hop reasoning** *(v3.0)* |
 
 ### Generators
 
 | Generator | Local | Cost | Top models (April 2026) |
 |-----------|:-----:|------|------------------------|
-| `OllamaGenerator` | Yes | Free | gemma4, qwen3.5, llama4:scout, deepseek-v3.2 |
-| `OpenAIGenerator` | No | Paid | gpt-5.4, gpt-5.4-pro, gpt-5.3-codex, gpt-5-mini |
-| `AnthropicGenerator` | No | Paid | claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 |
+| `OllamaGenerator` | ✅ | Free | gemma4, qwen3.5, llama4:scout, deepseek-v3.2 |
+| `OpenAIGenerator` | ☁️ | Paid | gpt-5.4, gpt-5.4-pro, gpt-5.3-codex, gpt-5-mini |
+| `AnthropicGenerator` | ☁️ | Paid | claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 |
 | `LiteLLMGenerator` | Mixed | Varies | All above + gemini-3.1-pro, mistral-large-3 |
+
+### Agents & Intelligence
+
+| Agent | What it does | Key Innovation |
+|-------|-------------|----------------|
+| `QueryRouter` | Routes queries to optimal strategy | 4 route types with sub-question decomposition |
+| `CRAGAgent` | Self-correcting retrieval | Document grading + knowledge refinement + web fallback |
+| `SelfRAGAgent` | Self-reflective generation | Reflection tokens (relevance, support, usefulness) |
+| `ReActAgent` | Reasoning + tool use | Think → Act → Observe loop with pluggable tools |
+| `AdaptiveRetriever` | Dynamic strategy selection | Query complexity → strategy → confidence → retry |
+| `SmartPipeline` | Composable orchestrator | Guardrails → cache → memory → route → verify |
+| `GraphRetriever` | Graph-enhanced retrieval | Entity traversal + community search + vector fusion |
 
 ### Document Loaders
 
@@ -384,7 +499,7 @@ guard.is_allowed("Who should I vote for?")           # False
 
 ---
 
-## Evaluation
+## 📊 Evaluation
 
 ### 9 Retrieval & Generation Metrics
 
@@ -397,19 +512,15 @@ from ragpipe.evaluation import (
 
 ### LLM-as-Judge
 
-Automated scoring of RAG output quality across three dimensions:
-
-| Dimension | What it measures |
-|-----------|-----------------|
-| **Faithfulness** | Is the answer grounded in the retrieved context? |
-| **Relevance** | Does the answer address the question? |
-| **Completeness** | Does the answer cover all key points from the context? |
+| Dimension | What it measures | Scale |
+|-----------|-----------------|:-----:|
+| **Faithfulness** | Is the answer grounded in the retrieved context? | 0–5 |
+| **Relevance** | Does the answer address the question? | 0–5 |
+| **Completeness** | Does the answer cover all key points? | 0–5 |
 
 ---
 
-## Async & Streaming
-
-Every method has a native async counterpart. Providers with HTTP I/O override with native async via `httpx.AsyncClient`.
+## ⚡ Async & Streaming
 
 ```python
 import asyncio
@@ -429,7 +540,7 @@ asyncio.run(main())
 
 ---
 
-## REST API Server
+## 🌐 REST API Server
 
 ```bash
 python -m ragpipe serve --config pipeline.yml --port 8000 --api-key mysecret
@@ -447,7 +558,7 @@ python -m ragpipe serve --config pipeline.yml --port 8000 --api-key mysecret
 
 ---
 
-## YAML Pipeline Config
+## 📋 YAML Pipeline Config
 
 ```yaml
 chunker:
@@ -474,7 +585,7 @@ pipe = PipelineConfig.from_yaml("pipeline.yml").build()
 
 ---
 
-## Extending ragpipe
+## 🔌 Extending ragpipe
 
 Every component is a base class. Custom implementations plug into Pipeline, the REST server, and YAML config automatically.
 
@@ -490,40 +601,44 @@ class CohereEmbedder(BaseEmbedder):
 
 ---
 
-## Testing
+## 🧪 Testing
 
 ```bash
 pip install -e ".[dev]"
-python run_tests.py          # 131 tests with per-test timing
+python run_tests.py          # 314 tests with per-test timing
+pytest tests/ -v             # standard pytest
 ```
 
 ---
 
-## Project Stats
+## 📈 Project Stats
 
 | Metric | Value |
 |--------|-------|
-| **Version** | 2.1.0 |
-| **Tests** | 131 passed |
-| **Test time** | < 1 second |
+| **Version** | 3.0.0 |
+| **Tests** | 314 passed |
+| **Test time** | 0.74 seconds |
+| **Source lines** | ~10,000 |
 | **Core deps** | numpy, rs-bpe, httpx |
 | **Python** | 3.10+ |
 | **License** | MIT |
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the full transformation plan.
+See [ROADMAP.md](ROADMAP.md) for the full plan.
 
-| Phase | Status | Highlights |
-|-------|--------|------------|
-| **Phase 1** — Production Foundation | ✅ Complete | Async, streaming, REST API, 6 vector stores, YAML config |
-| **Phase 2** — Intelligent Retrieval | ✅ Complete | Agentic router, parent-child chunking, caching, memory, observability |
-| **Phase 3** — Intelligence Layer | Planned | Graph RAG, guardrails, PII protection, Gradio UI |
+| Phase | Version | Status | Highlights |
+|-------|---------|--------|------------|
+| **Phase 1** — Production Foundation | v2.0 | ✅ Complete | Async, streaming, REST API, 6 vector stores, YAML config |
+| **Phase 2** — Intelligent Retrieval | v2.1 | ✅ Complete | Agentic router, parent-child chunking, caching, memory, observability |
+| **Phase 3** — Intelligence Layer | v2.2 | ✅ Complete | CRAG, adaptive retrieval, optimizer, verifier, guardrails |
+| **Phase 4** — Knowledge & Agents | v3.0 | ✅ Complete | Knowledge Graph RAG, SelfRAG, ReAct, SmartPipeline, 314 tests |
+| **Phase 5** — Platform | v3.1 | 🔜 Next | Gradio UI, Docker, Helm, benchmarks, plugin system |
 
 ---
 
-## License
+## 📄 License
 
 MIT

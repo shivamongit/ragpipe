@@ -4,6 +4,26 @@ All notable changes to ragpipe are documented here.
 
 ---
 
+## [3.0.0] — April 2026
+
+### Phase 4: Knowledge Graph & Advanced Agents
+
+#### Unique Differentiators (not available in LangChain, LlamaIndex, Haystack, or DSPy)
+
+- **Knowledge Graph RAG** (`ragpipe.graph`) — `EntityExtractor` extracts entities and relationships from text (LLM or regex heuristics). `GraphBuilder` builds a `KnowledgeGraph` from documents with entity deduplication. `CommunityDetector` runs label propagation to find graph communities. `GraphRetriever` combines local graph traversal, global community search, and vector retrieval into a hybrid strategy.
+- **SelfRAG Agent** (`ragpipe.agents.selfrag`) — `SelfRAGAgent` implements self-reflective retrieval with four reflection tokens: `IsRetrievalNeeded`, `IsRelevant`, `IsSupported`, `IsUseful`. Iterates on low-quality answers. Based on the SelfRAG paper (Asai et al., 2023).
+- **ReAct Agent** (`ragpipe.agents.react`) — `ReActAgent` implements the Reasoning + Acting paradigm with pluggable `Tool` objects. Think → Act → Observe → Repeat loop with configurable max steps.
+- **SmartPipeline** (`ragpipe.agents.smart_pipeline`) — `SmartPipeline` composes all ragpipe intelligence modules into a single `.query()` call: guardrails → cache → memory → route → retrieve → verify → respond.
+
+#### Improvements
+
+- Test suite expanded from 215 to **314 tests** (all passing in < 1 second)
+- 7 new test files: `test_graph_entities.py`, `test_graph_builder.py`, `test_graph_community.py`, `test_graph_retriever.py`, `test_selfrag.py`, `test_react.py`, `test_smart_pipeline.py`
+- 5 new modules: `ragpipe.graph` (4 files), `ragpipe.agents.selfrag`, `ragpipe.agents.react`, `ragpipe.agents.smart_pipeline`
+- Premium README with competitive comparison, architecture diagrams, comprehensive code examples
+
+---
+
 ## [2.2.0] — April 2026
 
 ### Phase 3: Intelligence & Safety Layer

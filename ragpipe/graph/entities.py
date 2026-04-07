@@ -14,15 +14,25 @@ from typing import Any, Callable, Optional
 # Data structures
 # ---------------------------------------------------------------------------
 
+VALID_ENTITY_TYPES = frozenset({
+    "PERSON", "ORGANIZATION", "LOCATION", "CONCEPT", "TECHNOLOGY", "EVENT", "OTHER",
+})
+
+
 @dataclass
 class Entity:
     """A named entity extracted from text."""
 
     name: str
-    entity_type: str  # PERSON, ORGANIZATION, LOCATION, CONCEPT, TECHNOLOGY, EVENT
+    entity_type: str  # PERSON, ORGANIZATION, LOCATION, CONCEPT, TECHNOLOGY, EVENT, OTHER
     description: str = ""
     properties: dict[str, Any] = field(default_factory=dict)
     source_doc_id: str = ""
+
+    def __post_init__(self) -> None:
+        self.entity_type = self.entity_type.upper()
+        if self.entity_type not in VALID_ENTITY_TYPES:
+            self.entity_type = "OTHER"
 
     @property
     def id(self) -> str:
