@@ -1,14 +1,12 @@
 """FastAPI REST API server for ragpipe pipelines."""
 
-from __future__ import annotations
-
 import os
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from ragpipe.core import Document, Pipeline
 
 
-def create_app(pipeline: Pipeline | None = None, api_key: str | None = None):
+def create_app(pipeline: Union[Pipeline, None] = None, api_key: Union[str, None] = None):
     """Create a FastAPI app wrapping a ragpipe Pipeline.
 
     Args:
@@ -25,7 +23,7 @@ def create_app(pipeline: Pipeline | None = None, api_key: str | None = None):
     app = FastAPI(
         title="ragpipe",
         description="Production-grade RAG pipeline API",
-        version="2.0.0",
+        version="3.0.0",
     )
 
     app.add_middleware(

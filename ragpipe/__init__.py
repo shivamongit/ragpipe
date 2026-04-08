@@ -1,4 +1,4 @@
-"""ragpipe — Production-grade modular RAG framework with hybrid search, contextual chunking, and query expansion."""
+"""ragpipe — Context Engineering Platform: production-grade RAG with knowledge graphs, agentic retrieval, self-improving pipelines, and simulation testing."""
 
 __version__ = "3.0.0"
 

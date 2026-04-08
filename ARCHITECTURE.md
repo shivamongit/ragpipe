@@ -278,9 +278,28 @@ ragpipe/
 │   │   ├── __init__.py
 │   │   ├── semantic.py       # SemanticCache (cosine similarity threshold)
 │   │   └── embedding.py      # EmbeddingCache (LRU, keyed by text hash)
+│   ├── context/              #                                                           [v3.0]
+│   │   ├── __init__.py
+│   │   └── window.py         # ContextWindow (programmable context composition)
+│   ├── graph/                #                                                           [v3.0]
+│   │   ├── __init__.py
+│   │   └── knowledge_graph.py # KnowledgeGraph (entity extraction, BFS, graph+vector fusion)
+│   ├── pipeline/             #                                                           [v3.0]
+│   │   ├── __init__.py
+│   │   └── dag.py            # PipelineDAG (branching, conditional, parallel execution)
+│   ├── plugins/              #                                                           [v3.0]
+│   │   ├── __init__.py
+│   │   └── registry.py       # PluginRegistry (entry points, discovery, factory)
+│   ├── simulation/           #                                                           [v3.0]
+│   │   ├── __init__.py
+│   │   └── runner.py         # SimulationRunner ("pytest for RAG", 9 failure scenarios)
+│   ├── intelligence/         #                                                           [v3.0]
+│   │   ├── __init__.py
+│   │   └── analyzer.py       # DatasetAnalyzer (staleness, duplicates, health scoring)
 │   ├── optimization/
 │   │   ├── __init__.py
-│   │   └── optimizer.py      # PipelineOptimizer (grid/random search, DSPy-inspired)
+│   │   ├── optimizer.py      # PipelineOptimizer (grid/random search, DSPy-inspired)
+│   │   └── self_improving.py # SelfImprovingLoop (Bayesian/bandit optimization)          [v3.0]
 │   ├── verification/
 │   │   ├── __init__.py
 │   │   └── verifier.py       # AnswerVerifier (claim decomposition, hallucination detection)
@@ -292,6 +311,10 @@ ragpipe/
 │   ├── memory/
 │   │   ├── __init__.py
 │   │   └── conversation.py   # ConversationMemory (multi-turn + contextualization)
+│   ├── utils/                #                                                           [v3.0]
+│   │   ├── __init__.py
+│   │   ├── retry.py          # @retry / @aretry (exponential backoff, jitter)
+│   │   └── costs.py          # CostTracker (per-model pricing, budget enforcement)
 │   └── observability/
 │       ├── __init__.py
 │       └── tracer.py         # Tracer, Span, TracerCallback (structured tracing)

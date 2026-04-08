@@ -76,6 +76,12 @@ class Pipeline:
         )
         pipe.ingest([Document(content="...")])
         result = pipe.query("What is the main finding?")
+
+    Auto-tracing:
+        from ragpipe.observability import Tracer
+        pipe = Pipeline(..., tracer=Tracer())
+        result = pipe.query("...")
+        print(pipe.tracer.summary())  # per-step timing breakdown
     """
 
     def __init__(
@@ -87,6 +93,7 @@ class Pipeline:
         reranker=None,
         top_k: int = 5,
         rerank_top_k: int = 3,
+        tracer=None,
     ):
         self.chunker = chunker
         self.embedder = embedder
@@ -95,44 +102,77 @@ class Pipeline:
         self.generator = generator
         self.top_k = top_k
         self.rerank_top_k = rerank_top_k
+        self.tracer = tracer
         self._documents: list[Document] = []
 
     def ingest(self, documents: list[Document]) -> dict[str, int]:
         """Ingest documents: chunk, embed, and index."""
-        all_chunks: list[Chunk] = []
-        for doc in documents:
-            chunks = self.chunker.chunk(doc)
-            all_chunks.extend(chunks)
+        if self.tracer:
+            ctx = self.tracer.span("ingest", document_count=len(documents))
+        else:
+            ctx = _nullcontext()
 
-        if not all_chunks:
-            return {"documents": 0, "chunks": 0}
+        with ctx:
+            all_chunks: list[Chunk] = []
+            for doc in documents:
+                chunks = self.chunker.chunk(doc)
+                all_chunks.extend(chunks)
 
-        texts = [c.text for c in all_chunks]
-        embeddings = self.embedder.embed(texts)
+            if not all_chunks:
+                return {"documents": 0, "chunks": 0}
 
-        for chunk, emb in zip(all_chunks, embeddings):
-            chunk.embedding = emb
+            texts = [c.text for c in all_chunks]
+            embeddings = self.embedder.embed(texts)
 
-        self.retriever.add(all_chunks, embeddings)
-        self._documents.extend(documents)
+            for chunk, emb in zip(all_chunks, embeddings):
+                chunk.embedding = emb
 
-        return {"documents": len(documents), "chunks": len(all_chunks)}
+            self.retriever.add(all_chunks, embeddings)
+            self._documents.extend(documents)
+
+            stats = {"documents": len(documents), "chunks": len(all_chunks)}
+            if self.tracer and hasattr(ctx, 'span'):
+                ctx.span.metadata.update(stats)
+            return stats
 
     def query(self, question: str, top_k: int | None = None) -> GenerationResult:
         """Full RAG query: embed → retrieve → rerank → generate."""
         t0 = time.perf_counter()
         k = top_k or self.top_k
 
-        query_embedding = self.embedder.embed([question])[0]
-        results = self.retriever.search(query_embedding, top_k=k)
+        if self.tracer:
+            with self.tracer.span("embed", text_count=1):
+                query_embedding = self.embedder.embed([question])[0]
+        else:
+            query_embedding = self.embedder.embed([question])[0]
+
+        if self.tracer:
+            with self.tracer.span("retrieve", top_k=k) as s:
+                results = self._search(query_embedding, k, question)
+                s.metadata["result_count"] = len(results)
+                if results:
+                    s.metadata["top_score"] = round(results[0].score, 4)
+        else:
+            results = self._search(query_embedding, k, question)
 
         if self.reranker and results:
-            results = self.reranker.rerank(question, results, top_k=self.rerank_top_k)
+            if self.tracer:
+                with self.tracer.span("rerank", input_count=len(results)) as s:
+                    results = self.reranker.rerank(question, results, top_k=self.rerank_top_k)
+                    s.metadata["output_count"] = len(results)
+            else:
+                results = self.reranker.rerank(question, results, top_k=self.rerank_top_k)
 
         for i, r in enumerate(results):
             r.rank = i + 1
 
-        answer = self.generator.generate(question, results)
+        if self.tracer:
+            with self.tracer.span("generate", context_chunks=len(results)) as s:
+                answer = self.generator.generate(question, results)
+                s.metadata["tokens_used"] = answer.tokens_used
+                s.metadata["model"] = answer.model
+        else:
+            answer = self.generator.generate(question, results)
 
         latency = (time.perf_counter() - t0) * 1000
         return GenerationResult(
@@ -144,11 +184,19 @@ class Pipeline:
             metadata=answer.metadata,
         )
 
+    def _search(self, query_embedding: list[float], top_k: int, query_text: str) -> list[RetrievalResult]:
+        """Search with query_text passthrough for HybridRetriever."""
+        import inspect
+        sig = inspect.signature(self.retriever.search)
+        if "query_text" in sig.parameters:
+            return self.retriever.search(query_embedding, top_k=top_k, query_text=query_text)
+        return self.retriever.search(query_embedding, top_k=top_k)
+
     def retrieve(self, question: str, top_k: int | None = None) -> list[RetrievalResult]:
         """Retrieve without generation — useful for debugging and evaluation."""
         k = top_k or self.top_k
         query_embedding = self.embedder.embed([question])[0]
-        results = self.retriever.search(query_embedding, top_k=k)
+        results = self._search(query_embedding, k, question)
 
         if self.reranker and results:
             results = self.reranker.rerank(question, results, top_k=self.rerank_top_k)
@@ -157,6 +205,14 @@ class Pipeline:
             r.rank = i + 1
 
         return results
+
+    async def _asearch(self, query_embedding: list[float], top_k: int, query_text: str) -> list[RetrievalResult]:
+        """Async search with query_text passthrough for HybridRetriever."""
+        import inspect
+        sig = inspect.signature(self.retriever.search)
+        if "query_text" in sig.parameters:
+            return self.retriever.search(query_embedding, top_k=top_k, query_text=query_text)
+        return self.retriever.search(query_embedding, top_k=top_k)
 
     async def aingest(self, documents: list[Document]) -> dict[str, int]:
         """Async ingest: chunk, embed, and index documents."""
@@ -185,7 +241,7 @@ class Pipeline:
         k = top_k or self.top_k
 
         query_embedding = (await self.embedder.aembed([question]))[0]
-        results = self.retriever.search(query_embedding, top_k=k)
+        results = await self._asearch(query_embedding, k, question)
 
         if self.reranker and results:
             results = await self.reranker.arerank(question, results, top_k=self.rerank_top_k)
@@ -209,7 +265,7 @@ class Pipeline:
         """Async retrieve without generation."""
         k = top_k or self.top_k
         query_embedding = (await self.embedder.aembed([question]))[0]
-        results = self.retriever.search(query_embedding, top_k=k)
+        results = await self._asearch(query_embedding, k, question)
 
         if self.reranker and results:
             results = await self.reranker.arerank(question, results, top_k=self.rerank_top_k)
@@ -224,7 +280,7 @@ class Pipeline:
         k = top_k or self.top_k
 
         query_embedding = (await self.embedder.aembed([question]))[0]
-        results = self.retriever.search(query_embedding, top_k=k)
+        results = await self._asearch(query_embedding, k, question)
 
         if self.reranker and results:
             results = await self.reranker.arerank(question, results, top_k=self.rerank_top_k)
@@ -242,3 +298,11 @@ class Pipeline:
     @property
     def chunk_count(self) -> int:
         return self.retriever.count
+
+
+class _nullcontext:
+    """Minimal no-op context manager (avoids importing contextlib)."""
+    def __enter__(self):
+        return self
+    def __exit__(self, *args):
+        return False
