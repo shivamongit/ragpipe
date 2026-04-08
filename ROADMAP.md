@@ -74,16 +74,38 @@ ragpipe is a production-grade, modular RAG framework with **314 tests** covering
 | 22 | **ReAct Agent** — reasoning + acting loop with pluggable tool use | `ragpipe.agents.react` | ✅ Complete |
 | 23 | **SmartPipeline** — composable intelligence orchestrator (guardrails → cache → memory → route → verify) | `ragpipe.agents.smart_pipeline` | ✅ Complete |
 
-### Phase 5 — Platform & Ecosystem (Planned)
+### Phase 5 — Visual Platform *(Planned, v3.1)*
 
 | # | Pillar | Notes |
 |---|--------|-------|
-| 24 | **Gradio Playground UI** | Interactive RAG playground with source highlighting and tracing |
-| 25 | **Docker & Helm** | Docker Compose for local deployment, Helm chart for Kubernetes |
-| 26 | **Plugin System** | Setuptools entry points for community components |
-| 27 | **Benchmarks** | Standard RAG benchmarks (HotpotQA, NaturalQuestions, MMLU) |
-| — | **Migration Tooling** | LangChain → ragpipe migration guides |
-| — | **TypeScript SDK** | JavaScript/TypeScript client for ragpipe REST API |
+| 24 | **Gradio RAG Playground** | Interactive query testing with source highlighting, confidence scores, trace visualization |
+| 25 | **Visual Pipeline Builder** | Drag-and-drop pipeline design: connect components visually → export YAML → run |
+| 26 | **Knowledge Graph Visualizer** | Interactive graph exploration with entity clustering, relationship mapping, community views |
+| 27 | **RAG Analytics Dashboard** | Real-time metrics: latency, cache hit rate, hallucination rate, cost tracking |
+| 28 | **Docker & Helm** | Docker Compose for local, Helm chart for Kubernetes |
+| 29 | **Benchmark Suite** | Automated benchmarks on HotpotQA, NaturalQuestions, MMLU |
+| 30 | **Plugin System** | Setuptools entry points for community-contributed components |
+
+### Phase 6 — Enterprise Intelligence *(Planned, v4.0)*
+
+| # | Pillar | Notes |
+|---|--------|-------|
+| 31 | **Multi-Modal RAG** | Images, tables, audio, video in the retrieval pipeline |
+| 32 | **Multi-Agent Collaboration** | Specialized agents (researcher, analyst, verifier) collaborating on queries |
+| 33 | **Context Engineering** | Programmable context windows: compress, deduplicate, prioritize, budget |
+| 34 | **Self-Improving Pipeline** | Online learning loop: query → feedback → auto-tune → improve |
+| 35 | **Advanced Knowledge Graph** | Temporal graphs, hierarchical entities, cross-document resolution |
+| 36 | **RAG Security** | RBAC, audit logging, encryption at rest, compliance (SOC2, HIPAA) |
+
+### Phase 7 — Platform & Ecosystem *(Planned, v5.0)*
+
+| # | Pillar | Notes |
+|---|--------|-------|
+| 37 | **RAG-as-a-Service** | Hosted ragpipe with API keys, billing, team management |
+| 38 | **Component Marketplace** | Community-contributed components with ratings and versioning |
+| 39 | **TypeScript SDK** | JS/TS client + React components for ragpipe API |
+| 40 | **Migration Tooling** | `ragpipe migrate --from langchain` automatic translation |
+| 41 | **Model Fine-Tuning** | Built-in fine-tuning on domain-specific data |
 
 ---
 
@@ -113,8 +135,18 @@ ragpipe is a production-grade, modular RAG framework with **314 tests** covering
 | SelfRAG Agent | ★★★★★ | High | P1 | ✅ v3.0 |
 | ReAct Agent | ★★★★☆ | Medium | P2 | ✅ v3.0 |
 | SmartPipeline | ★★★★★ | Medium | P1 | ✅ v3.0 |
-| Gradio Playground | ★★★☆☆ | Medium | P3 | Phase 5 |
-| Docker & Helm | ★★★☆☆ | Low | P3 | Phase 5 |
+| Gradio Playground | ★★★★★ | Medium | P1 | Phase 5 |
+| Visual Pipeline Builder | ★★★★★ | High | P1 | Phase 5 |
+| Knowledge Graph Visualizer | ★★★★★ | Medium | P2 | Phase 5 |
+| RAG Analytics Dashboard | ★★★★☆ | Medium | P2 | Phase 5 |
+| Docker & Helm | ★★★★☆ | Low | P2 | Phase 5 |
+| Benchmarks | ★★★★☆ | Medium | P2 | Phase 5 |
+| Plugin System | ★★★☆☆ | Medium | P3 | Phase 5 |
+| Multi-Modal RAG | ★★★★★ | High | P1 | Phase 6 |
+| Multi-Agent Collaboration | ★★★★★ | High | P1 | Phase 6 |
+| Context Engineering | ★★★★★ | High | P1 | Phase 6 |
+| Self-Improving Pipeline | ★★★★☆ | High | P2 | Phase 6 |
+| RAG-as-a-Service | ★★★★★ | Very High | P1 | Phase 7 |
 
 ---
 
