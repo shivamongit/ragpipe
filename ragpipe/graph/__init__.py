@@ -1,5 +1,19 @@
-"""Knowledge Graph RAG — entity extraction, graph building, and graph+vector retrieval fusion."""
+"""Knowledge Graph RAG — entity extraction, graph construction, community detection, and graph-enhanced retrieval."""
 
-from ragpipe.graph.knowledge_graph import KnowledgeGraph, Entity, Relation, Triple, GraphSearchResult
+from ragpipe.graph.entities import Entity, Relationship, KnowledgeGraph, EntityExtractor
+from ragpipe.graph.builder import GraphBuilder, GraphBuildResult
+from ragpipe.graph.community import CommunityDetector, Community
+from ragpipe.graph.retriever import GraphRetriever, GraphRAGResult
 
-__all__ = ["KnowledgeGraph", "Entity", "Relation", "Triple", "GraphSearchResult"]
+__all__ = [
+    "Entity",
+    "Relationship",
+    "KnowledgeGraph",
+    "EntityExtractor",
+    "GraphBuilder",
+    "GraphBuildResult",
+    "CommunityDetector",
+    "Community",
+    "GraphRetriever",
+    "GraphRAGResult",
+]

@@ -1,19 +1,20 @@
 # ragpipe — Transformation Roadmap
 
-> Last updated: April 2026 &middot; Current version: **v2.2.0**
+> Last updated: April 2026 &middot; Current version: **v3.0.0**
 
 ---
 
 ## Current State
 
-ragpipe is a production-grade, modular RAG framework with **215 tests** covering:
+ragpipe is a production-grade, modular RAG framework with **314 tests** covering:
 
 - **6 chunkers** — token, recursive, semantic, contextual, parent-child, custom
 - **6 embedders** — Ollama, SentenceTransformers, OpenAI, Voyage, Jina, custom
-- **6 retrievers** — FAISS, NumPy, BM25, Hybrid RRF, ChromaDB, Qdrant
+- **7 retrievers** — FAISS, NumPy, BM25, Hybrid RRF, ChromaDB, Qdrant, **GraphRetriever**
 - **4 generators** — Ollama, OpenAI GPT-5.4, Anthropic Claude 4.6, LiteLLM (100+)
 - **10+ loaders** — PDF, DOCX, TXT, CSV/Excel, HTML/Web, YouTube, directory
-- **Agentic RAG** — query router, CRAG (self-correcting), adaptive retrieval
+- **Knowledge Graph RAG** — entity extraction, graph builder, community detection, graph+vector hybrid retrieval
+- **6 agents** — query router, CRAG (self-correcting), SelfRAG (self-reflective), ReAct (tool use), adaptive retrieval, SmartPipeline (composable)
 - **Semantic caching** — query cache (cosine similarity) + LRU embedding cache
 - **Conversation memory** — multi-turn RAG with automatic query contextualization
 - **Answer verification** — hallucination detection, claim-level grounding, confidence scores
@@ -64,13 +65,47 @@ ragpipe is a production-grade, modular RAG framework with **215 tests** covering
 | 18 | **Guardrails: Injection Detector** — pattern-matched prompt injection with risk scoring | `ragpipe.guardrails.injection` | ✅ Complete |
 | 19 | **Guardrails: Topic Filter** — allowlist/blocklist topic restriction with keyword matching | `ragpipe.guardrails.topic` | ✅ Complete |
 
-### Phase 4 — Knowledge Graph & UI (Planned)
+### Phase 4 — Knowledge Graph & Advanced Agents ✅ `v3.0.0`
+
+| # | Pillar | Module | Status |
+|---|--------|--------|--------|
+| 20 | **Knowledge Graph RAG** — entity extraction, graph builder, community detection, graph+vector hybrid | `ragpipe.graph` | ✅ Complete |
+| 21 | **SelfRAG Agent** — self-reflective retrieval with relevance/support/usefulness tokens | `ragpipe.agents.selfrag` | ✅ Complete |
+| 22 | **ReAct Agent** — reasoning + acting loop with pluggable tool use | `ragpipe.agents.react` | ✅ Complete |
+| 23 | **SmartPipeline** — composable intelligence orchestrator (guardrails → cache → memory → route → verify) | `ragpipe.agents.smart_pipeline` | ✅ Complete |
+
+### Phase 5 — Visual Platform *(Planned, v3.1)*
 
 | # | Pillar | Notes |
 |---|--------|-------|
-| 20 | **Graph RAG** | Entity extraction, graph builder, community detection, graph+vector retrieval |
-| — | **SelfRAG / ReAct** | Self-reflective retrieval, ReAct agent loop with tool use |
-| — | **UI & Deployment** | Gradio playground, Docker Compose, Helm chart |
+| 24 | **Gradio RAG Playground** | Interactive query testing with source highlighting, confidence scores, trace visualization |
+| 25 | **Visual Pipeline Builder** | Drag-and-drop pipeline design: connect components visually → export YAML → run |
+| 26 | **Knowledge Graph Visualizer** | Interactive graph exploration with entity clustering, relationship mapping, community views |
+| 27 | **RAG Analytics Dashboard** | Real-time metrics: latency, cache hit rate, hallucination rate, cost tracking |
+| 28 | **Docker & Helm** | Docker Compose for local, Helm chart for Kubernetes |
+| 29 | **Benchmark Suite** | Automated benchmarks on HotpotQA, NaturalQuestions, MMLU |
+| 30 | **Plugin System** | Setuptools entry points for community-contributed components |
+
+### Phase 6 — Enterprise Intelligence *(Planned, v4.0)*
+
+| # | Pillar | Notes |
+|---|--------|-------|
+| 31 | **Multi-Modal RAG** | Images, tables, audio, video in the retrieval pipeline |
+| 32 | **Multi-Agent Collaboration** | Specialized agents (researcher, analyst, verifier) collaborating on queries |
+| 33 | **Context Engineering** | Programmable context windows: compress, deduplicate, prioritize, budget |
+| 34 | **Self-Improving Pipeline** | Online learning loop: query → feedback → auto-tune → improve |
+| 35 | **Advanced Knowledge Graph** | Temporal graphs, hierarchical entities, cross-document resolution |
+| 36 | **RAG Security** | RBAC, audit logging, encryption at rest, compliance (SOC2, HIPAA) |
+
+### Phase 7 — Platform & Ecosystem *(Planned, v5.0)*
+
+| # | Pillar | Notes |
+|---|--------|-------|
+| 37 | **RAG-as-a-Service** | Hosted ragpipe with API keys, billing, team management |
+| 38 | **Component Marketplace** | Community-contributed components with ratings and versioning |
+| 39 | **TypeScript SDK** | JS/TS client + React components for ragpipe API |
+| 40 | **Migration Tooling** | `ragpipe migrate --from langchain` automatic translation |
+| 41 | **Model Fine-Tuning** | Built-in fine-tuning on domain-specific data |
 
 ---
 
@@ -96,7 +131,22 @@ ragpipe is a production-grade, modular RAG framework with **215 tests** covering
 | Pipeline Optimizer | ★★★★★ | Medium | P1 | ✅ v2.2 |
 | Answer Verifier | ★★★★★ | Medium | P1 | ✅ v2.2 |
 | Guardrails (PII/Injection/Topic) | ★★★★☆ | Medium | P2 | ✅ v2.2 |
-| Graph RAG | ★★★☆☆ | High | P3 | Phase 4 |
+| Knowledge Graph RAG | ★★★★★ | High | P1 | ✅ v3.0 |
+| SelfRAG Agent | ★★★★★ | High | P1 | ✅ v3.0 |
+| ReAct Agent | ★★★★☆ | Medium | P2 | ✅ v3.0 |
+| SmartPipeline | ★★★★★ | Medium | P1 | ✅ v3.0 |
+| Gradio Playground | ★★★★★ | Medium | P1 | Phase 5 |
+| Visual Pipeline Builder | ★★★★★ | High | P1 | Phase 5 |
+| Knowledge Graph Visualizer | ★★★★★ | Medium | P2 | Phase 5 |
+| RAG Analytics Dashboard | ★★★★☆ | Medium | P2 | Phase 5 |
+| Docker & Helm | ★★★★☆ | Low | P2 | Phase 5 |
+| Benchmarks | ★★★★☆ | Medium | P2 | Phase 5 |
+| Plugin System | ★★★☆☆ | Medium | P3 | Phase 5 |
+| Multi-Modal RAG | ★★★★★ | High | P1 | Phase 6 |
+| Multi-Agent Collaboration | ★★★★★ | High | P1 | Phase 6 |
+| Context Engineering | ★★★★★ | High | P1 | Phase 6 |
+| Self-Improving Pipeline | ★★★★☆ | High | P2 | Phase 6 |
+| RAG-as-a-Service | ★★★★★ | Very High | P1 | Phase 7 |
 
 ---
 
@@ -104,6 +154,7 @@ ragpipe is a production-grade, modular RAG framework with **215 tests** covering
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v3.0.0** | April 2026 | Knowledge Graph RAG (entity extraction, graph builder, community detection, graph+vector retrieval), SelfRAG agent (self-reflective tokens), ReAct agent (tool use), SmartPipeline (composable orchestrator), 314 tests |
 | **v2.2.0** | April 2026 | CRAG agent, adaptive retrieval, pipeline optimizer, answer verifier, guardrails (PII/injection/topic), 215 tests |
 | **v2.1.0** | April 2026 | Agentic router, parent-child chunking, semantic caching, conversation memory, LLM-as-Judge, observability, 10+ loaders, rs-bpe tokenizer, 131 tests |
 | **v2.0.0** | April 2026 | Async-first, streaming, FastAPI server, Anthropic/LiteLLM/Voyage/Jina, ChromaDB/Qdrant, YAML config, April 2026 models |

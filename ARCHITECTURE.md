@@ -265,7 +265,15 @@ ragpipe/
 │   │   ├── router.py         # QueryRouter (direct/single/multi-step/summarize)
 │   │   ├── crag.py           # CRAGAgent (self-correcting RAG with relevance grading)
 │   │   ├── adaptive.py       # AdaptiveRetriever (auto strategy + confidence scoring)
-│   │   └── planner.py        # AgenticPipeline (plan → retrieve → evaluate → critique)  [v3.0]
+│   │   ├── selfrag.py        # SelfRAGAgent (self-reflective retrieval tokens) ★ v3.0
+│   │   ├── react.py          # ReActAgent (reasoning + acting with tool use) ★ v3.0
+│   │   └── smart_pipeline.py # SmartPipeline (composable intelligence orchestrator) ★ v3.0
+│   ├── graph/                # Knowledge Graph RAG ★ v3.0
+│   │   ├── __init__.py
+│   │   ├── entities.py       # Entity, Relationship, KnowledgeGraph, EntityExtractor
+│   │   ├── builder.py        # GraphBuilder (build graph from documents)
+│   │   ├── community.py      # CommunityDetector (label propagation)
+│   │   └── retriever.py      # GraphRetriever (local/global/hybrid graph search)
 │   ├── cache/
 │   │   ├── __init__.py
 │   │   ├── semantic.py       # SemanticCache (cosine similarity threshold)
@@ -309,10 +317,8 @@ ragpipe/
 │   │   └── costs.py          # CostTracker (per-model pricing, budget enforcement)
 │   └── observability/
 │       ├── __init__.py
-│       ├── tracer.py         # Tracer, Span, TracerCallback (structured tracing)
-│       └── otel.py           # OTelExporter (OTLP HTTP/gRPC, console, JSON)              [v3.0]
-├── tests/                    # 431 tests covering all components
-├── cookbooks/                # 6 cookbook examples (basic RAG → DAG pipelines)            [v3.0]
+│       └── tracer.py         # Tracer, Span, TracerCallback (structured tracing)
+├── tests/                    # 314 tests covering all components
 ├── run_tests.py              # Test runner with per-test timing report
 ├── examples/                 # Quickstart and OpenAI pipeline examples
 ├── pyproject.toml            # Package config, dependencies, extras
