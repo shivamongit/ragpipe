@@ -6,42 +6,43 @@
 ```
                                       ╔═══════════════════════╗
                                       ║                       ║
-     ██████╗  █████╗  ██████╗         ║   🧠 Intelligence     ║
+     ██████╗  █████╗  ██████╗         ║   🧠 Multi-LLM        ║
      ██╔══██╗██╔══██╗██╔════╝         ║   🕸️ Knowledge Graph  ║
      ██████╔╝███████║██║  ███╗        ║   ⚡ Self-Correcting  ║
-     ██╔══██╗██╔══██║██║   ██║        ║   🔄 Adaptive         ║
+     ██╔══██╗██╔══██║██║   ██║        ║   🎨 Polished UI      ║
      ██║  ██║██║  ██║╚██████╔╝        ║   🛡️ Guardrails       ║
      ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝        ║                       ║
      ██████╗ ██╗██████╗ ███████╗      ╚═══════════════════════╝
      ██╔══██╗██║██╔══██╗██╔════╝
-     ██████╔╝██║██████╔╝█████╗        The Intelligent
-     ██╔═══╝ ██║██╔═══╝ ██╔══╝        RAG Framework
+     ██████╔╝██║██████╔╝█████╗        Production RAG
+     ██╔═══╝ ██║██╔═══╝ ██╔══╝        Studio
      ██║     ██║██║     ███████╗
-     ╚═╝     ╚═╝╚═╝     ╚══════╝      v3.0  ·  April 2026
+     ╚═╝     ╚═╝╚═╝     ╚══════╝      v3.1  ·  April 2026
 ```
 
 <br>
 
-### Build production-grade RAG that **thinks**, **self-corrects**, and **reasons** — not just retrieves.
+### Build production-grade RAG with **8 LLM providers**, a **polished chat studio**, and an intelligence layer that **thinks, self-corrects, and reasons**.
 
 <br>
 
+OpenAI · Anthropic · Gemini · Groq · Cohere · Mistral · Ollama · LiteLLM
 Knowledge Graph RAG · Self-Correcting CRAG · SelfRAG Reflection · ReAct Agents · Adaptive Retrieval
-Pipeline Auto-Tuning · Hallucination Detection · PII Guardrails · Composable SmartPipeline
+Pipeline Auto-Tuning · Hallucination Detection · PII Guardrails · Next.js Chat UI
 
 <br>
 
 [![CI](https://github.com/shivamongit/ragpipe/actions/workflows/ci.yml/badge.svg)](https://github.com/shivamongit/ragpipe/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg?style=flat-square)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-314%20passed-brightgreen.svg?style=flat-square)]()
-[![Version](https://img.shields.io/badge/version-3.0.0-orange.svg?style=flat-square)]()
+[![Tests](https://img.shields.io/badge/tests-454%20passed-brightgreen.svg?style=flat-square)]()
+[![Version](https://img.shields.io/badge/version-3.1.0-orange.svg?style=flat-square)]()
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg?style=flat-square)](https://github.com/astral-sh/ruff)
 [![Downloads](https://img.shields.io/badge/downloads-growing-blue.svg?style=flat-square)]()
 
 <br>
 
-**[🚀 Quickstart](#-quickstart)** · **[✨ Features](#-feature-overview)** · **[📦 Install](#-install)** · **[🏗️ Architecture](#%EF%B8%8F-architecture)** · **[📖 Docs](#-components-reference)** · **[🗺️ Roadmap](ROADMAP.md)**
+**[⚡ One-Command Start](#-one-command-start)** · **[🚀 Quickstart](#-quickstart)** · **[✨ Features](#-feature-overview)** · **[📦 Install](#-install)** · **[🎨 UI](#-chat-studio)** · **[🏗️ Architecture](#%EF%B8%8F-architecture)** · **[️ Roadmap](ROADMAP.md)**
 
 <br>
 
@@ -102,7 +103,7 @@ Loader → Chunker → Embedder → Retriever → Reranker → Generator
 - **6 chunking strategies** — token, recursive, semantic, contextual, parent-child
 - **6 embedder providers** — Ollama, SentenceTransformers, OpenAI, Voyage, Jina
 - **7 retriever backends** — FAISS, NumPy, BM25, Hybrid RRF, ChromaDB, Qdrant, Graph
-- **4 generator providers** — Ollama, OpenAI, Anthropic, LiteLLM (100+ models)
+- **8 LLM providers** — OpenAI, Anthropic, Gemini, Groq, Cohere, Mistral, Ollama, LiteLLM (100+)
 - Cross-encoder reranking · Query expansion (HyDE, Multi-Query, Step-Back)
 - 10+ document loaders (PDF, DOCX, CSV, HTML, YouTube)
 
@@ -215,6 +216,55 @@ pip install 'ragpipe[all]'           # all of the above
 </details>
 
 ---
+
+<div align="center">
+
+## ⚡ One-Command Start
+
+</div>
+
+The fastest way to use ragpipe — bundled launcher + Next.js studio:
+
+```bash
+git clone https://github.com/shivamongit/ragpipe.git
+cd ragpipe
+
+# Optional: copy .env.example to .env and add any API keys you have
+cp .env.example .env
+
+# Start backend (port 8000) + UI (port 3000) together
+./start.sh
+```
+
+Open **http://localhost:3000** in your browser. Done.
+
+The launcher auto-installs deps, detects the best available LLM provider (or falls back to Ollama), starts the FastAPI backend with conversation persistence, and boots the Next.js chat studio.
+
+### Force a specific provider/model
+
+```bash
+./start.sh --provider openai --model gpt-5-mini
+./start.sh --provider anthropic --model claude-sonnet-4-6
+./start.sh --provider groq --model llama-3.3-70b-versatile
+./start.sh --provider gemini --model gemini-2.5-flash
+./start.sh --provider ollama --model gemma3:4b
+```
+
+<div align="center">
+
+## 🎨 Chat Studio
+
+</div>
+
+The polished Next.js UI in `ragpipe-ui/` gives you:
+
+- 💬 **Streaming chat** with source citations
+- 🔄 **Multi-LLM model picker** — switch between 30+ models from 8 providers at any time
+- 💾 **Conversation history** — SQLite-backed sidebar grouped by date with rename + delete
+- 📎 **Drag-and-drop file upload** — PDF, DOCX, TXT, MD, HTML, CSV
+- 🔑 **Per-provider API key management** — keys stored locally in your browser
+- ⚙️ **Adjustable retrieval params** — top-K, server URL, all from a settings drawer
+- 🌒 **Polished dark UI** — glass effects, smooth animations, fully responsive
 
 <div align="center">
 

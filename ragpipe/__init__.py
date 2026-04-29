@@ -1,6 +1,6 @@
 """ragpipe — Context Engineering Platform: production-grade RAG with knowledge graphs, agentic retrieval, self-improving pipelines, and simulation testing."""
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 
 from ragpipe.core import Document, Chunk, RetrievalResult, GenerationResult, Pipeline
 from ragpipe.chunkers.base import BaseChunker

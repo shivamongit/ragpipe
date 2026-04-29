@@ -1,653 +1,513 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Send,
-  Upload,
-  Database,
-  Settings,
-  X,
+  Loader2,
+  AlertCircle,
+  Sparkles,
   FileText,
-  Clock,
-  Cpu,
+  Database,
   Zap,
-  ChevronDown,
-  Circle,
-  BookOpen,
-  Layers,
+  TrendingUp,
 } from "lucide-react";
-import { queryPipeline, ingestDocuments, getStats, checkHealth } from "@/lib/api";
-import type { Source, StatsResponse } from "@/lib/api";
+import {
+  checkHealth,
+  getStats,
+  StatsResponse,
+  createConversation,
+  getConversation,
+  ConversationDetail,
+  streamQuery,
+  Source,
+} from "@/lib/api";
 
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  sources?: Source[];
-  model?: string;
-  tokensUsed?: number;
-  latencyMs?: number;
-  timestamp: Date;
-}
-
-function formatLatency(ms: number): string {
-  return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
-}
-
-function SourceCard({ source, index }: { source: Source; index: number }) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <button
-      onClick={() => setExpanded(!expanded)}
-      className="text-left w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 hover:border-[#404040] transition-colors"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono bg-accent/20 text-accent px-1.5 py-0.5 rounded">
-            [{index + 1}]
-          </span>
-          <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-            {source.doc_id || "Unknown source"}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {(source.score * 100).toFixed(0)}%
-          </span>
-          <ChevronDown
-            className={`w-3 h-3 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
-          />
-        </div>
-      </div>
-      {expanded && (
-        <p className="mt-2 text-xs text-muted-foreground leading-relaxed border-t border-[#2a2a2a] pt-2">
-          {source.text}
-        </p>
-      )}
-    </button>
-  );
-}
-
-function ChatMessage({ message }: { message: Message }) {
-  const isUser = message.role === "user";
-
-  return (
-    <div className={`animate-fade-in ${isUser ? "flex justify-end" : ""}`}>
-      <div className={`max-w-[720px] ${isUser ? "ml-16" : "mr-16"}`}>
-        {/* Message bubble */}
-        <div
-          className={`rounded-2xl px-4 py-3 ${
-            isUser
-              ? "bg-accent text-accent-foreground"
-              : "bg-[#161616]"
-          }`}
-        >
-          <div className="prose-chat text-sm leading-relaxed whitespace-pre-wrap">
-            {message.content}
-          </div>
-        </div>
-
-        {/* Metadata bar for assistant messages */}
-        {!isUser && message.model && (
-          <div className="flex items-center gap-3 mt-2 px-1">
-            {message.model && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Cpu className="w-3 h-3" />
-                {message.model}
-              </span>
-            )}
-            {message.tokensUsed !== undefined && message.tokensUsed > 0 && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Layers className="w-3 h-3" />
-                {message.tokensUsed} tokens
-              </span>
-            )}
-            {message.latencyMs !== undefined && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="w-3 h-3" />
-                {formatLatency(message.latencyMs)}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Sources */}
-        {!isUser && message.sources && message.sources.length > 0 && (
-          <div className="mt-3 space-y-2">
-            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground px-1">
-              <BookOpen className="w-3 h-3" />
-              {message.sources.length} source{message.sources.length !== 1 ? "s" : ""}
-            </span>
-            <div className="grid gap-2">
-              {message.sources.map((source, i) => (
-                <SourceCard key={i} source={source} index={i} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ onSuggestionClick }: { onSuggestionClick: (q: string) => void }) {
-  return (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="text-center animate-slide-up">
-        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-[#161616] border border-[#2a2a2a] flex items-center justify-center">
-          <Zap className="w-8 h-8 text-accent" />
-        </div>
-        <h1 className="text-2xl font-semibold mb-2">ragpipe</h1>
-        <p className="text-muted-foreground text-sm max-w-md mb-8">
-          Context Engineering Platform. Chat with your documents using
-          knowledge graphs, agentic retrieval, and self-improving pipelines.
-        </p>
-        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
-          {[
-            "What are the key findings?",
-            "Summarize the main topics",
-            "Compare the methodologies",
-            "List all recommendations",
-          ].map((q, i) => (
-            <button
-              key={i}
-              onClick={() => onSuggestionClick(q)}
-              className="text-left text-xs bg-[#161616] border border-[#2a2a2a] rounded-xl px-3 py-2.5 text-muted-foreground hover:text-foreground hover:border-[#404040] transition-colors"
-            >
-              {q}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function IngestModal({
-  onClose,
-  onIngest,
-}: {
-  onClose: () => void;
-  onIngest: (docs: { content: string; metadata?: Record<string, string> }[]) => void;
-}) {
-  const [files, setFiles] = useState<File[]>([]);
-  const [textInput, setTextInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const dropped = Array.from(e.dataTransfer.files).filter(
-      (f) => f.type.startsWith("text/") || f.name.endsWith(".md") || f.name.endsWith(".txt")
-    );
-    setFiles((prev) => [...prev, ...dropped]);
-  }, []);
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    const docs: { content: string; metadata?: Record<string, string> }[] = [];
-
-    for (const file of files) {
-      const content = await file.text();
-      docs.push({ content, metadata: { source: file.name, type: file.type } });
-    }
-
-    if (textInput.trim()) {
-      docs.push({ content: textInput.trim(), metadata: { source: "manual_input" } });
-    }
-
-    if (docs.length > 0) {
-      onIngest(docs);
-    }
-    setLoading(false);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl w-full max-w-lg mx-4 animate-slide-up">
-        <div className="flex items-center justify-between p-4 border-b border-[#2a2a2a]">
-          <h2 className="font-semibold">Ingest Documents</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          {/* Drop zone */}
-          <div
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleDrop}
-            onClick={() => fileRef.current?.click()}
-            className="border-2 border-dashed border-[#2a2a2a] rounded-xl p-8 text-center cursor-pointer hover:border-accent/50 transition-colors"
-          >
-            <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Drop files here or <span className="text-accent">browse</span>
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">.txt, .md files</p>
-            <input
-              ref={fileRef}
-              type="file"
-              multiple
-              accept=".txt,.md,.csv"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files) setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
-              }}
-            />
-          </div>
-
-          {/* File list */}
-          {files.length > 0 && (
-            <div className="space-y-2">
-              {files.map((f, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between bg-[#1a1a1a] rounded-lg px-3 py-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm truncate max-w-[300px]">{f.name}</span>
-                  </div>
-                  <button
-                    onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Text input */}
-          <textarea
-            value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
-            placeholder="Or paste text content here..."
-            rows={4}
-            className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:border-accent/50 placeholder-[#555]"
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 p-4 border-t border-[#2a2a2a]">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground rounded-lg"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading || (files.length === 0 && !textInput.trim())}
-            className="px-4 py-2 text-sm bg-accent text-accent-foreground rounded-lg font-medium disabled:opacity-40 hover:bg-accent/90 transition-colors"
-          >
-            {loading ? "Ingesting..." : "Ingest"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SettingsModal({
-  onClose,
-  apiKey,
-  setApiKey,
-  apiUrl,
-  setApiUrl,
-  topK,
-  setTopK,
-}: {
-  onClose: () => void;
-  apiKey: string;
-  setApiKey: (v: string) => void;
-  apiUrl: string;
-  setApiUrl: (v: string) => void;
-  topK: number;
-  setTopK: (v: number) => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl w-full max-w-md mx-4 animate-slide-up">
-        <div className="flex items-center justify-between p-4 border-b border-[#2a2a2a]">
-          <h2 className="font-semibold">Settings</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-              API URL
-            </label>
-            <input
-              type="text"
-              value={apiUrl}
-              onChange={(e) => setApiUrl(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent/50"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-              API Key (optional)
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Leave empty if not required"
-              className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent/50 placeholder-[#555]"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-              Top K Results
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={topK}
-              onChange={(e) => setTopK(Number(e.target.value))}
-              className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-accent/50"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end p-4 border-t border-[#2a2a2a]">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm bg-accent text-accent-foreground rounded-lg font-medium hover:bg-accent/90 transition-colors"
-          >
-            Done
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Sidebar } from "@/components/Sidebar";
+import { ModelPicker } from "@/components/ModelPicker";
+import { IngestPanel } from "@/components/IngestPanel";
+import { SettingsModal } from "@/components/SettingsModal";
+import { ChatMessage, UIMessage } from "@/components/ChatMessage";
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  // ── state ──────────────────────────────────────────────────────────────
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<UIMessage[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [model, setModel] = useState<{ provider: string; model: string } | null>(null);
+  const [topK, setTopK] = useState(5);
+  const [stats, setStats] = useState<StatsResponse>({ documents: 0, chunks: 0 });
+  const [health, setHealth] = useState<"online" | "offline" | "unknown">("unknown");
   const [showIngest, setShowIngest] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [apiUrl, setApiUrl] = useState("http://localhost:8000");
-  const [topK, setTopK] = useState(5);
-  const [stats, setStats] = useState<StatsResponse | null>(null);
-  const [serverOnline, setServerOnline] = useState<boolean | null>(null);
-  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [sidebarRefresh, setSidebarRefresh] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
-  const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const streamRef = useRef<{ close: () => void } | null>(null);
 
-  // Auto-scroll to bottom
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  // ── effects ────────────────────────────────────────────────────────────
 
-  // Check health on mount and periodically
+  // Restore last selected model
   useEffect(() => {
-    const check = async () => {
-      const online = await checkHealth();
-      setServerOnline(online);
-      if (online) {
-        try {
-          const s = await getStats(apiKey || undefined);
-          setStats(s);
-        } catch {
-          /* ignore */
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("ragpipe.model");
+    if (saved) {
+      try {
+        setModel(JSON.parse(saved));
+      } catch {}
+    }
+    const k = window.localStorage.getItem("ragpipe.topK");
+    if (k) setTopK(Number(k));
+  }, []);
+
+  // Persist model + topK
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (model) window.localStorage.setItem("ragpipe.model", JSON.stringify(model));
+  }, [model]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("ragpipe.topK", String(topK));
+  }, [topK]);
+
+  // Health + stats polling
+  useEffect(() => {
+    let alive = true;
+    const poll = async () => {
+      try {
+        const h = await checkHealth();
+        if (!alive) return;
+        setHealth(h ? "online" : "offline");
+        if (h) {
+          try {
+            const s = await getStats();
+            if (alive) setStats(s);
+          } catch {}
         }
+      } catch {
+        if (alive) setHealth("offline");
       }
     };
-    check();
-    const interval = setInterval(check, 30000);
-    return () => clearInterval(interval);
-  }, [apiKey]);
+    poll();
+    const id = setInterval(poll, 15_000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, []);
 
-  // Auto-clear notification
+  // Auto-scroll on new message
   useEffect(() => {
-    if (notification) {
-      const t = setTimeout(() => setNotification(null), 4000);
-      return () => clearTimeout(t);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages]);
+
+  // ── handlers ───────────────────────────────────────────────────────────
+
+  const handleNewChat = () => {
+    streamRef.current?.close();
+    setConversationId(null);
+    setMessages([]);
+    setError(null);
+    inputRef.current?.focus();
+  };
+
+  const handleSelectConversation = async (id: string) => {
+    if (id === conversationId) return;
+    streamRef.current?.close();
+    try {
+      const conv: ConversationDetail = await getConversation(id);
+      setConversationId(id);
+      setMessages(
+        conv.messages.map((m) => ({
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          sources: m.sources,
+          model: m.model || undefined,
+          tokensUsed: m.tokens_used,
+          latencyMs: m.latency_ms,
+          timestamp: new Date(m.created_at),
+        })),
+      );
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load conversation");
     }
-  }, [notification]);
-
-  const showNotification = (type: "success" | "error", message: string) => {
-    setNotification({ type, message });
   };
 
-  const handleSuggestionClick = (q: string) => {
-    setInput(q);
-    // Use a small delay so the input state updates before sending
-    setTimeout(() => {
-      const syntheticQuestion = q;
-      sendQuestion(syntheticQuestion);
-    }, 50);
+  const ensureConversation = async (firstQuestion: string): Promise<string> => {
+    if (conversationId) return conversationId;
+    const title = firstQuestion.slice(0, 60).trim() || "New chat";
+    const conv = await createConversation({
+      title,
+      provider: model?.provider,
+      model: model?.model,
+    });
+    setConversationId(conv.id);
+    setSidebarRefresh((x) => x + 1);
+    return conv.id;
   };
 
-  const sendQuestion = async (question: string) => {
-    if (!question || loading) return;
+  const handleSend = async (questionOverride?: string) => {
+    const question = (questionOverride ?? input).trim();
+    if (!question || streaming) return;
+    setError(null);
+    setInput("");
 
-    const userMsg: Message = {
+    // Optimistic user message
+    const userMsg: UIMessage = {
       id: crypto.randomUUID(),
       role: "user",
       content: question,
       timestamp: new Date(),
     };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setLoading(true);
+    const assistantMsg: UIMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: "",
+      isStreaming: true,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+    setStreaming(true);
 
     try {
-      const result = await queryPipeline(question, apiKey || undefined, topK);
-      const assistantMsg: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: result.answer,
-        sources: result.sources,
-        model: result.model,
-        tokensUsed: result.tokens_used,
-        latencyMs: result.latency_ms,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch (err) {
-      const errorMsg: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: `**Error:** ${err instanceof Error ? err.message : "Failed to query pipeline"}. Make sure the ragpipe server is running (\`python -m ragpipe serve\`).`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      const convId = await ensureConversation(question);
+
+      let sourcesBuf: Source[] = [];
+      let answerBuf = "";
+      const handle = streamQuery(question, {
+        topK,
+        provider: model?.provider,
+        model: model?.model,
+        conversationId: convId,
+        onSources: (s) => {
+          sourcesBuf = s;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantMsg.id ? { ...m, sources: s } : m)),
+          );
+        },
+        onToken: (tok) => {
+          answerBuf += tok;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantMsg.id ? { ...m, content: answerBuf } : m)),
+          );
+        },
+        onDone: ({ model: modelId, latency_ms }) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsg.id
+                ? {
+                    ...m,
+                    content: answerBuf || "(no answer)",
+                    isStreaming: false,
+                    model: modelId,
+                    latencyMs: latency_ms,
+                    sources: sourcesBuf,
+                  }
+                : m,
+            ),
+          );
+          setSidebarRefresh((x) => x + 1);
+        },
+        onError: (msg) => {
+          setError(msg);
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantMsg.id
+                ? { ...m, content: `_Error: ${msg}_`, isStreaming: false }
+                : m,
+            ),
+          );
+        },
+      });
+      streamRef.current = handle;
+      await handle.promise;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Query failed";
+      setError(msg);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === assistantMsg.id
+            ? { ...m, content: `_Error: ${msg}_`, isStreaming: false }
+            : m,
+        ),
+      );
     } finally {
-      setLoading(false);
-      inputRef.current?.focus();
+      setStreaming(false);
+      streamRef.current = null;
     }
   };
 
-  const handleIngest = async (
-    docs: { content: string; metadata?: Record<string, string> }[]
-  ) => {
-    try {
-      const result = await ingestDocuments(docs, apiKey || undefined);
-      showNotification("success", `Ingested ${result.documents} docs → ${result.chunks} chunks`);
-      const s = await getStats(apiKey || undefined);
-      setStats(s);
-    } catch (err) {
-      showNotification("error", err instanceof Error ? err.message : "Ingest failed");
-    }
+  const handleStopGeneration = () => {
+    streamRef.current?.close();
+    streamRef.current = null;
+    setStreaming(false);
+    setMessages((prev) => prev.map((m) => (m.isStreaming ? { ...m, isStreaming: false } : m)));
   };
 
-  const handleSend = () => {
-    const question = input.trim();
-    if (!question || loading) return;
-    setInput("");
-    sendQuestion(question);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
+  const handleIngested = async () => {
+    try {
+      const s = await getStats();
+      setStats(s);
+    } catch {}
+  };
+
+  // ── render ─────────────────────────────────────────────────────────────
+
   return (
-    <div className="h-full flex flex-col">
-      {/* Top bar */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-[#0d0d0d]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center">
-            <Zap className="w-4 h-4 text-accent" />
+    <div className="h-full flex relative">
+      <Sidebar
+        activeId={conversationId}
+        onSelect={handleSelectConversation}
+        onNewChat={handleNewChat}
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenIngest={() => setShowIngest(true)}
+        stats={stats}
+        health={health}
+        refreshKey={sidebarRefresh}
+      />
+
+      <main className="flex-1 flex flex-col min-w-0 relative z-10">
+        {/* Top bar */}
+        <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-background/60 backdrop-blur-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            <h2 className="text-sm font-medium truncate">
+              {messages.length === 0 ? (
+                <span className="text-foreground-muted">Start a new conversation</span>
+              ) : (
+                <span>Chat</span>
+              )}
+            </h2>
           </div>
-          <div>
-            <h1 className="text-sm font-semibold leading-none">ragpipe</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Context Engineering Platform</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Server status */}
-          <div className="flex items-center gap-1.5 mr-2">
-            <Circle
-              className={`w-2 h-2 fill-current ${
-                serverOnline === null
-                  ? "text-yellow-500"
-                  : serverOnline
-                    ? "text-success"
-                    : "text-destructive"
-              }`}
-            />
-            <span className="text-xs text-muted-foreground">
-              {serverOnline === null ? "Checking..." : serverOnline ? "Online" : "Offline"}
-            </span>
-          </div>
-
-          {/* Stats badge */}
-          {stats && (
-            <div className="flex items-center gap-1.5 bg-[#161616] border border-[#2a2a2a] rounded-lg px-2.5 py-1.5 mr-1">
-              <Database className="w-3 h-3 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">
-                {stats.documents} docs · {stats.chunks} chunks
-              </span>
-            </div>
-          )}
-
-          <button
-            onClick={() => setShowIngest(true)}
-            className="flex items-center gap-1.5 bg-[#161616] border border-[#2a2a2a] rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-[#404040] transition-colors"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            Ingest
-          </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="flex items-center justify-center w-8 h-8 rounded-lg border border-[#2a2a2a] text-muted-foreground hover:text-foreground hover:border-[#404040] transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
-
-      {/* Notification toast */}
-      {notification && (
-        <div
-          className={`mx-4 mt-3 px-4 py-2.5 rounded-xl text-sm animate-slide-up border ${
-            notification.type === "success"
-              ? "bg-success/10 border-success/20 text-success"
-              : "bg-destructive/10 border-destructive/20 text-destructive"
-          }`}
-        >
-          {notification.message}
-        </div>
-      )}
-
-      {/* Chat area */}
-      <div className="flex-1 overflow-y-auto">
-        {messages.length === 0 ? (
-          <EmptyState onSuggestionClick={handleSuggestionClick} />
-        ) : (
-          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-            {messages.map((msg) => (
-              <ChatMessage key={msg.id} message={msg} />
-            ))}
-
-            {/* Loading indicator */}
-            {loading && (
-              <div className="animate-fade-in">
-                <div className="max-w-[720px] mr-16">
-                  <div className="rounded-2xl px-4 py-3 bg-[#161616]">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-accent/60 rounded-full animate-bounce [animation-delay:0ms]" />
-                        <span className="w-2 h-2 bg-accent/60 rounded-full animate-bounce [animation-delay:150ms]" />
-                        <span className="w-2 h-2 bg-accent/60 rounded-full animate-bounce [animation-delay:300ms]" />
-                      </div>
-                      <span className="text-xs text-muted-foreground">Thinking...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div ref={chatEndRef} />
-          </div>
-        )}
-      </div>
-
-      {/* Input area */}
-      <div className="border-t border-border bg-[#0d0d0d] p-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-end gap-3 bg-[#161616] border border-[#2a2a2a] rounded-2xl px-4 py-3 focus-within:border-accent/40 transition-colors">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask anything about your documents..."
-              rows={1}
-              className="flex-1 bg-transparent resize-none text-sm focus:outline-none placeholder-[#555] max-h-32 min-h-[20px]"
-              style={{ height: "auto" }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = "auto";
-                target.style.height = Math.min(target.scrollHeight, 128) + "px";
-              }}
-            />
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleSend}
-              disabled={!input.trim() || loading}
-              className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent text-accent-foreground disabled:opacity-30 hover:bg-accent/90 transition-colors shrink-0"
+              onClick={() => setShowIngest(true)}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors"
             >
-              <Send className="w-4 h-4" />
+              <Database className="w-3.5 h-3.5" />
+              <span>{stats.documents} docs</span>
+            </button>
+            <ModelPicker value={model} onChange={setModel} />
+          </div>
+        </header>
+
+        {/* Error banner */}
+        {error && (
+          <div className="mx-5 mt-3 px-4 py-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive flex items-center gap-2 animate-slide-up">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span className="flex-1">{error}</span>
+            <button onClick={() => setError(null)} className="text-xs hover:underline">
+              dismiss
             </button>
           </div>
-          <p className="text-center text-xs text-muted-foreground mt-2">
-            ragpipe v3.0 · Press Enter to send, Shift+Enter for new line
+        )}
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto">
+          {messages.length === 0 ? (
+            <EmptyState
+              onSuggestion={(q) => handleSend(q)}
+              hasDocuments={stats.documents > 0}
+              onIngest={() => setShowIngest(true)}
+              onSelectModel={() => {}}
+              modelSelected={!!model}
+            />
+          ) : (
+            <div className="pb-8">
+              {messages.map((m) => (
+                <ChatMessage key={m.id} message={m} />
+              ))}
+              {streaming && messages[messages.length - 1]?.content === "" && (
+                <div className="max-w-[850px] mx-auto px-6 py-3 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="dot-loader">
+                    <span /> <span /> <span />
+                  </span>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        {/* Composer */}
+        <div className="px-5 pb-5 pt-2">
+          <div className="max-w-[850px] mx-auto">
+            <div className="relative rounded-2xl border border-border bg-surface-2/80 backdrop-blur-sm focus-within:border-border-strong shadow-lg transition-all">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  health === "offline"
+                    ? "Backend offline — start the ragpipe server"
+                    : stats.documents === 0
+                    ? "Ingest documents first, then ask anything..."
+                    : "Ask anything about your documents..."
+                }
+                rows={1}
+                disabled={health === "offline"}
+                className="w-full resize-none bg-transparent px-4 py-3.5 pr-12 text-[15px] focus:outline-none placeholder:text-foreground-subtle disabled:opacity-50"
+                style={{ minHeight: "52px", maxHeight: "240px" }}
+                onInput={(e) => {
+                  const t = e.currentTarget;
+                  t.style.height = "auto";
+                  t.style.height = Math.min(t.scrollHeight, 240) + "px";
+                }}
+              />
+              <div className="absolute right-2 bottom-2">
+                {streaming ? (
+                  <button
+                    onClick={handleStopGeneration}
+                    className="w-9 h-9 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground flex items-center justify-center transition-colors"
+                    title="Stop"
+                  >
+                    <span className="w-2.5 h-2.5 bg-current rounded-sm" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleSend()}
+                    disabled={!input.trim() || health === "offline"}
+                    className="w-9 h-9 rounded-xl bg-accent hover:bg-accent-hover text-accent-foreground disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-sm"
+                    title="Send (Enter)"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-foreground-subtle px-1">
+              <span>
+                <kbd className="px-1.5 py-0.5 rounded bg-surface-3 border border-border text-foreground-muted">
+                  ⏎
+                </kbd>{" "}
+                send ·{" "}
+                <kbd className="px-1.5 py-0.5 rounded bg-surface-3 border border-border text-foreground-muted">
+                  ⇧⏎
+                </kbd>{" "}
+                newline
+              </span>
+              <span className="flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" /> top_k={topK}
+              </span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <IngestPanel
+        open={showIngest}
+        onClose={() => setShowIngest(false)}
+        stats={stats}
+        onIngested={handleIngested}
+      />
+      <SettingsModal
+        open={showSettings}
+        onClose={() => setShowSettings(false)}
+        topK={topK}
+        onTopKChange={setTopK}
+      />
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
+interface EmptyStateProps {
+  onSuggestion: (q: string) => void;
+  hasDocuments: boolean;
+  onIngest: () => void;
+  onSelectModel: () => void;
+  modelSelected: boolean;
+}
+
+function EmptyState({ onSuggestion, hasDocuments, onIngest }: EmptyStateProps) {
+  const suggestions = hasDocuments
+    ? [
+        { icon: Sparkles, label: "Summarize the main themes" },
+        { icon: TrendingUp, label: "What are the key findings?" },
+        { icon: FileText, label: "List all recommendations" },
+        { icon: Zap, label: "Compare the methodologies" },
+      ]
+    : [];
+
+  return (
+    <div className="h-full flex items-center justify-center px-6">
+      <div className="max-w-2xl w-full animate-slide-up">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-5 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-xl shadow-indigo-500/30">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight mb-2">
+            <span className="bg-gradient-to-r from-foreground to-foreground-muted bg-clip-text text-transparent">
+              Welcome to ragpipe
+            </span>
+          </h1>
+          <p className="text-foreground-muted max-w-md mx-auto">
+            Production RAG with multi-LLM support. Upload your docs and chat with{" "}
+            <span className="text-foreground">OpenAI, Claude, Gemini, Groq, Cohere, Mistral</span>{" "}
+            or local <span className="text-foreground">Ollama</span> models.
           </p>
         </div>
-      </div>
 
-      {/* Modals */}
-      {showIngest && <IngestModal onClose={() => setShowIngest(false)} onIngest={handleIngest} />}
-      {showSettings && (
-        <SettingsModal
-          onClose={() => setShowSettings(false)}
-          apiKey={apiKey}
-          setApiKey={setApiKey}
-          apiUrl={apiUrl}
-          setApiUrl={setApiUrl}
-          topK={topK}
-          setTopK={setTopK}
-        />
-      )}
+        {!hasDocuments ? (
+          <div className="mt-8 rounded-2xl border border-border bg-surface-2/50 p-6 text-center">
+            <Database className="w-8 h-8 text-foreground-muted mx-auto mb-3" />
+            <h2 className="text-base font-semibold mb-1">No documents yet</h2>
+            <p className="text-sm text-foreground-muted mb-4">
+              Upload PDFs, DOCX, TXT, or paste text to start chatting with your knowledge base.
+            </p>
+            <button
+              onClick={onIngest}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-foreground text-sm font-medium transition-colors shadow-sm"
+            >
+              <Database className="w-4 h-4" /> Open Knowledge Base
+            </button>
+          </div>
+        ) : (
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {suggestions.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => onSuggestion(s.label)}
+                className="group flex items-start gap-3 p-3.5 rounded-xl border border-border bg-surface-2/40 hover:bg-surface-2 hover:border-border-strong text-left transition-all"
+              >
+                <span className="w-8 h-8 rounded-lg bg-accent/10 text-accent-hover flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
+                  <s.icon className="w-4 h-4" />
+                </span>
+                <span className="text-sm text-foreground-muted group-hover:text-foreground transition-colors">
+                  {s.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-8 flex items-center justify-center gap-3 text-xs text-foreground-subtle">
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-success pulse-dot" />
+            7 providers
+          </span>
+          <span>·</span>
+          <span>30+ models</span>
+          <span>·</span>
+          <span>Streaming &amp; citations</span>
+        </div>
+      </div>
     </div>
   );
 }

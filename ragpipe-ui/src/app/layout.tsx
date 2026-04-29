@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ragpipe",
-  description: "Context Engineering Platform — Chat with your documents",
+  title: "ragpipe — Production RAG Studio",
+  description: "Multi-LLM RAG playground: OpenAI, Anthropic, Gemini, Groq, Cohere, Mistral, Ollama. Chat with your documents.",
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({

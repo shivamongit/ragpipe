@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ragpipe"
-version = "3.0.0"
-description = "Production-grade modular RAG framework with hybrid search, contextual chunking, query expansion, and pluggable components"
+version = "3.1.0"
+description = "Production RAG with multi-LLM support (OpenAI/Anthropic/Gemini/Groq/Cohere/Mistral/Ollama), knowledge graphs, agentic retrieval, self-improving pipelines, simulation testing"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
@@ -41,6 +41,10 @@ server = [
     "python-multipart>=0.0.9",
 ]
 anthropic = ["anthropic>=0.34.0"]
+gemini = ["google-genai>=0.3.0"]
+groq = ["openai>=1.30.0"]  # uses OpenAI-compatible API
+cohere = ["cohere>=5.13.0"]
+mistral = ["mistralai>=1.5.0"]
 litellm = ["litellm>=1.40.0"]
 voyage = ["voyageai>=0.3.0"]
 jina = []
@@ -48,6 +52,13 @@ chroma = ["chromadb>=0.5.0"]
 qdrant = ["qdrant-client>=1.10.0"]
 config = ["pyyaml>=6.0"]
 ollama = []
+llms = [
+    "openai>=1.30.0",
+    "anthropic>=0.34.0",
+    "google-genai>=0.3.0",
+    "cohere>=5.13.0",
+    "mistralai>=1.5.0",
+]
 otel = ["opentelemetry-sdk>=1.20.0", "opentelemetry-exporter-otlp-proto-http>=1.20.0"]
 optuna = ["optuna>=3.0.0"]
 data = ["pandas>=2.0.0", "openpyxl>=3.1.0"]
@@ -64,6 +75,9 @@ all = [
     "uvicorn>=0.30.0",
     "python-multipart>=0.0.9",
     "anthropic>=0.34.0",
+    "google-genai>=0.3.0",
+    "cohere>=5.13.0",
+    "mistralai>=1.5.0",
     "litellm>=1.40.0",
     "voyageai>=0.3.0",
     "chromadb>=0.5.0",

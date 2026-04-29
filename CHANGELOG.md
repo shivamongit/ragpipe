@@ -4,6 +4,58 @@ All notable changes to ragpipe are documented here.
 
 ---
 
+## [3.1.0] — April 2026
+
+### Production RAG Studio
+
+ragpipe v3.1 turns the framework into a complete production-ready studio: multi-LLM provider support, polished Next.js UI, conversation persistence, and a one-command launcher.
+
+#### New LLM Providers
+
+- **GeminiGenerator** (`ragpipe.generators.gemini_gen`) — Google Gemini 2.5 Pro/Flash/Flash-Lite + 2.0 Flash via `google-genai` SDK. Native sync, async, and streaming.
+- **GroqGenerator** (`ragpipe.generators.groq_gen`) — Groq's ultra-fast LPU inference for Llama 3.3 70B, Llama 3.1 8B Instant, Mixtral 8x7B, Qwen 3 32B, DeepSeek R1 Distill, Kimi K2.
+- **CohereGenerator** (`ragpipe.generators.cohere_gen`) — Cohere Command A, Command R+/R/R7B with native RAG citation support via `cohere>=5.13`.
+- **MistralGenerator** (`ragpipe.generators.mistral_gen`) — Mistral Large/Medium/Small + Codestral via `mistralai>=1.5`.
+
+Total LLM providers: **8** (OpenAI, Anthropic, Gemini, Groq, Cohere, Mistral, Ollama, LiteLLM 100+).
+
+#### Provider Registry & Runtime Switching
+
+- **`ragpipe.generators.registry`** — Single source of truth for providers and models. `list_providers()`, `find_model()`, `build_generator()` for runtime model switching.
+- **30+ curated models** with metadata: context window, pricing, tags (fast/cheap/reasoning), description.
+- **Per-query overrides** — `/query` and `/query/stream` accept `provider`, `model`, `api_key_override` so a single backend can talk to any LLM.
+
+#### Server Upgrades
+
+- **`GET /providers`** — Lists all providers with installed/key-set availability.
+- **`GET /models`** — Lists all models with `?provider=` and `?available_only=` filters.
+- **`POST /upload`** — Multipart file uploads with auto-extraction (PDF, DOCX, TXT, MD, HTML, CSV).
+- **Conversation persistence** — SQLite-backed `/conversations` CRUD endpoints. Messages, sources, tokens, latency stored per conversation.
+- **Streaming sources** — WebSocket streams now emit a `sources` frame before tokens.
+
+#### Production Polish
+
+- **`launch.py`** — Auto-detect best available provider, build pipeline, start uvicorn. Loads `.env` automatically.
+- **`start.sh`** — One-command launcher. Installs deps, starts backend (8000) + Next.js UI (3000) together.
+- **`.env.example`** — Documented environment variables for all providers.
+
+#### UI Studio (Next.js 16 + Tailwind v4)
+
+- **Sidebar** with grouped conversation history (Today / Yesterday / Previous 7 days / Previous 30 days / Older), inline rename, and delete.
+- **Model picker** — Searchable dropdown of all 30+ models, grouped by provider, with pricing/context/tag badges and inline availability indicator.
+- **Settings modal** — Tabbed UI for per-provider API keys, server URL, and retrieval params. Keys stored in `localStorage`.
+- **Ingest panel** — Drag-and-drop or paste, with current document/chunk count and clear-all action.
+- **Streaming responses** — Token-by-token assistant responses with optimistic UI and stop button.
+- **Source citations** — Expandable cards with relevance scores and full text.
+- **Markdown rendering** — Lightweight in-browser renderer (headings, lists, code, blockquotes, tables, source pills).
+
+#### Tests
+
+- **+23 new tests** for the registry, conversation storage, and server upgrades.
+- Total: **454 tests passing** in < 1s.
+
+---
+
 ## [3.0.0] — April 2026
 
 ### Phase 4: Knowledge Graph & Advanced Agents
