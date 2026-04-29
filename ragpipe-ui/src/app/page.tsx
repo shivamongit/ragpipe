@@ -26,6 +26,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { ModelPicker } from "@/components/ModelPicker";
 import { IngestPanel } from "@/components/IngestPanel";
 import { SettingsModal } from "@/components/SettingsModal";
+import { GraphPanel } from "@/components/GraphPanel";
 import { ChatMessage, UIMessage } from "@/components/ChatMessage";
 
 export default function Home() {
@@ -40,6 +41,7 @@ export default function Home() {
   const [health, setHealth] = useState<"online" | "offline" | "unknown">("unknown");
   const [showIngest, setShowIngest] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showGraph, setShowGraph] = useState(false);
   const [sidebarRefresh, setSidebarRefresh] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -273,6 +275,7 @@ export default function Home() {
         onNewChat={handleNewChat}
         onOpenSettings={() => setShowSettings(true)}
         onOpenIngest={() => setShowIngest(true)}
+        onOpenGraph={() => setShowGraph(true)}
         stats={stats}
         health={health}
         refreshKey={sidebarRefresh}
@@ -280,20 +283,30 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Top bar */}
-        <header className="flex items-center justify-between px-5 py-3 border-b border-border bg-background/60 backdrop-blur-sm">
-          <div className="flex items-center gap-2 min-w-0">
+        <header className="flex items-center justify-between px-5 py-3 border-b border-border glass-strong">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="hidden md:flex items-center gap-1.5 text-[11px] text-foreground-subtle">
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  health === "online" ? "bg-success pulse-dot" : health === "offline" ? "bg-destructive" : "bg-foreground-subtle"
+                }`}
+              />
+              <span className="uppercase tracking-wider">{health === "online" ? "Live" : health}</span>
+              <span className="text-foreground-subtle/60">·</span>
+              <span>{stats.chunks} chunks indexed</span>
+            </div>
             <h2 className="text-sm font-medium truncate">
               {messages.length === 0 ? (
                 <span className="text-foreground-muted">Start a new conversation</span>
               ) : (
-                <span>Chat</span>
+                <span className="text-foreground">Active chat</span>
               )}
             </h2>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowIngest(true)}
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors border border-transparent hover:border-border"
             >
               <Database className="w-3.5 h-3.5" />
               <span>{stats.documents} docs</span>
@@ -346,7 +359,7 @@ export default function Home() {
         {/* Composer */}
         <div className="px-5 pb-5 pt-2">
           <div className="max-w-[850px] mx-auto">
-            <div className="relative rounded-2xl border border-border bg-surface-2/80 backdrop-blur-sm focus-within:border-border-strong shadow-lg transition-all">
+            <div className="relative rounded-2xl border border-border bg-surface-2/80 backdrop-blur-sm focus-within:border-accent/60 focus-within:shadow-[0_0_0_3px_rgba(99,102,241,0.10)] shadow-xl shadow-black/40 transition-all">
               <textarea
                 ref={inputRef}
                 value={input}
@@ -421,6 +434,7 @@ export default function Home() {
         topK={topK}
         onTopKChange={setTopK}
       />
+      <GraphPanel open={showGraph} onClose={() => setShowGraph(false)} />
     </div>
   );
 }

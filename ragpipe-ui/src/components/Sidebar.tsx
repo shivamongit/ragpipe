@@ -10,8 +10,7 @@ import {
   Database,
   ExternalLink,
   Sparkles,
-  Check,
-  X,
+  Network,
 } from "lucide-react";
 import {
   Conversation,
@@ -27,6 +26,7 @@ interface SidebarProps {
   onNewChat: () => void;
   onOpenSettings: () => void;
   onOpenIngest: () => void;
+  onOpenGraph: () => void;
   stats: { documents: number; chunks: number };
   health: "online" | "offline" | "unknown";
   refreshKey: number;
@@ -38,6 +38,7 @@ export function Sidebar({
   onNewChat,
   onOpenSettings,
   onOpenIngest,
+  onOpenGraph,
   stats,
   health,
   refreshKey,
@@ -103,18 +104,25 @@ export function Sidebar({
   const groupedConversations = groupByDate(conversations);
 
   return (
-    <aside className="w-72 shrink-0 h-full flex flex-col border-r border-border bg-surface/40 backdrop-blur-sm relative z-10">
+    <aside className="w-72 shrink-0 h-full flex flex-col border-r border-border glass relative z-10">
       {/* Brand */}
       <div className="px-4 py-4 border-b border-border">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <div className="relative w-9 h-9 rounded-xl bg-grad-brand flex items-center justify-center shadow-lg shadow-indigo-500/30 orbit-glow">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-sm font-semibold leading-none tracking-tight">ragpipe</h1>
-            <p className="text-[10px] text-foreground-subtle mt-1 uppercase tracking-wider">
-              RAG Studio v3.1
-            </p>
+            <h1 className="text-sm font-semibold leading-none tracking-tight text-gradient">
+              ragpipe
+            </h1>
+            <div className="flex items-center gap-1.5 mt-1">
+              <p className="text-[10px] text-foreground-subtle uppercase tracking-wider">
+                RAG Studio
+              </p>
+              <span className="px-1.5 py-px rounded-sm bg-grad-brand text-[9px] font-semibold text-white tracking-wide">
+                v3.1
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -123,10 +131,11 @@ export function Sidebar({
       <div className="p-3">
         <button
           onClick={handleNewChat}
-          className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-foreground text-sm font-medium transition-all shadow-sm hover:shadow-md hover:shadow-accent/20"
+          className="group relative w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-grad-brand text-accent-foreground text-sm font-medium transition-all shadow-md hover:shadow-lg hover:shadow-accent/30 overflow-hidden"
         >
-          <Plus className="w-4 h-4" />
-          New chat
+          <span className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+          <Plus className="w-4 h-4 relative" />
+          <span className="relative">New chat</span>
         </button>
       </div>
 
@@ -214,6 +223,19 @@ export function Sidebar({
           <span className="text-[10px] tabular-nums">
             {stats.documents} <span className="text-foreground-subtle">docs</span> · {stats.chunks}{" "}
             <span className="text-foreground-subtle">chunks</span>
+          </span>
+        </button>
+
+        <button
+          onClick={onOpenGraph}
+          className="w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg bg-surface-2 hover:bg-surface-3 text-foreground-muted hover:text-foreground text-xs transition-colors group"
+        >
+          <span className="flex items-center gap-2">
+            <Network className="w-3.5 h-3.5 group-hover:text-accent-hover transition-colors" />
+            <span>Knowledge Graph</span>
+          </span>
+          <span className="text-[9px] uppercase tracking-wider text-accent-hover/80 px-1.5 py-px rounded bg-accent/10 border border-accent/20">
+            New
           </span>
         </button>
 

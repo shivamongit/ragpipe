@@ -103,13 +103,12 @@ export function IngestPanel({ open, onClose, stats, onIngested }: IngestPanelPro
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
-      style={{ background: "color-mix(in srgb, var(--background) 70%, transparent)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in modal-backdrop"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-2xl max-h-[85vh] bg-surface border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+        className="modal-panel relative w-full max-w-2xl max-h-[85vh] rounded-2xl flex flex-col overflow-hidden animate-slide-up"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">

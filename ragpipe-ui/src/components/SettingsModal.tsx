@@ -61,13 +61,12 @@ export function SettingsModal({ open, onClose, topK, onTopKChange }: SettingsMod
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
-      style={{ background: "color-mix(in srgb, var(--background) 70%, transparent)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in modal-backdrop"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-3xl max-h-[85vh] bg-surface border border-border rounded-2xl shadow-2xl flex overflow-hidden animate-slide-up"
+        className="modal-panel relative w-full max-w-3xl max-h-[85vh] rounded-2xl flex overflow-hidden animate-slide-up"
       >
         {/* Sidebar tabs */}
         <div className="w-44 shrink-0 border-r border-border bg-surface-2/40 p-3">

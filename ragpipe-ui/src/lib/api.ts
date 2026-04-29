@@ -284,6 +284,39 @@ export async function clearIndex(): Promise<void> {
   await api("/index", { method: "DELETE" });
 }
 
+// ── Knowledge Graph ─────────────────────────────────────────────────────────
+
+export interface GraphEntity {
+  id: string;
+  name: string;
+  mentions: number;
+  neighbors: number;
+}
+
+export interface GraphTriple {
+  subject: string;
+  predicate: string;
+  object: string;
+  weight: number;
+  source_doc: string;
+}
+
+export interface KnowledgeGraphResponse {
+  entity_count: number;
+  triple_count: number;
+  documents_indexed: number;
+  entities: GraphEntity[];
+  triples: GraphTriple[];
+}
+
+export async function getKnowledgeGraph(opts: { maxEntities?: number; maxTriples?: number } = {}): Promise<KnowledgeGraphResponse> {
+  const params = new URLSearchParams();
+  if (opts.maxEntities) params.set("max_entities", String(opts.maxEntities));
+  if (opts.maxTriples) params.set("max_triples", String(opts.maxTriples));
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  return api<KnowledgeGraphResponse>(`/graph${qs}`);
+}
+
 // ── Conversations ───────────────────────────────────────────────────────────
 
 export async function listConversations(): Promise<Conversation[]> {

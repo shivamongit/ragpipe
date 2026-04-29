@@ -390,6 +390,8 @@ def create_app(
             pipe.retriever._chunks = []
             if hasattr(pipe.retriever, "_embeddings"):
                 pipe.retriever._embeddings = None
+        if hasattr(app.state, "kg_cache"):
+            app.state.kg_cache = {"signature": None, "graph": None}
         return {"status": "ok", "message": "Index cleared"}
 
     @app.post("/evaluate", response_model=EvaluateResponse, dependencies=[Depends(verify_api_key)])
@@ -443,6 +445,72 @@ def create_app(
         if not ok:
             raise HTTPException(status_code=404, detail="Conversation not found")
         return {"status": "ok"}
+
+    # ── Knowledge Graph ──────────────────────────────────────────────────────
+
+    app.state.kg_cache = {"signature": None, "graph": None}
+
+    @app.get("/graph", dependencies=[Depends(verify_api_key)])
+    async def get_graph(max_entities: int = 60, max_triples: int = 200):
+        """Build or return a cached knowledge graph from indexed documents.
+
+        Uses heuristic (regex) entity/relation extraction so it works without
+        an LLM. The result is cached and only rebuilt when the document set
+        changes.
+        """
+        from ragpipe.graph.knowledge_graph import KnowledgeGraph
+
+        pipe = get_pipeline()
+        docs = pipe._documents
+        sig = (len(docs), pipe.chunk_count)
+
+        cache = app.state.kg_cache
+        if cache["signature"] != sig or cache["graph"] is None:
+            kg = KnowledgeGraph()  # heuristic extraction (no LLM)
+            for i, d in enumerate(docs):
+                source = (
+                    d.metadata.get("filename")
+                    or d.metadata.get("source")
+                    or f"doc-{i}"
+                )
+                try:
+                    kg.add_document(d.content, source=source)
+                except Exception:
+                    continue
+            cache["signature"] = sig
+            cache["graph"] = kg
+
+        kg = cache["graph"]
+
+        # Top entities by mentions / connectivity
+        entities_sorted = sorted(
+            kg.entities,
+            key=lambda e: (e.mentions, len(kg._adjacency.get(e.id, {}))),
+            reverse=True,
+        )[:max_entities]
+
+        keep_ids = {e.id for e in entities_sorted}
+        triples = [
+            t.to_dict() for t in kg.triples
+            if t.subject.lower().strip() in keep_ids
+            and t.object.lower().strip() in keep_ids
+        ][:max_triples]
+
+        return {
+            "entity_count": kg.entity_count,
+            "triple_count": kg.triple_count,
+            "documents_indexed": len(docs),
+            "entities": [
+                {
+                    "id": e.id,
+                    "name": e.name,
+                    "mentions": e.mentions,
+                    "neighbors": len(kg._adjacency.get(e.id, {})),
+                }
+                for e in entities_sorted
+            ],
+            "triples": triples,
+        }
 
     return app
 
